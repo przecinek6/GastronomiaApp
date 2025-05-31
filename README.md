@@ -1,21 +1,27 @@
-# EasyGastro - System Planowania Posiłków
+# GastronomiaApp - System Zarządzania Cateringiem
 
 ## Opis
-EasyGastro to aplikacja webowa do zarządzania planami posiłków w restauracji lub firmie cateringowej. 
-System umożliwia dietetykom i managerom tworzenie tygodniowych planów posiłków dla różnych typów diet.
+GastronomiaApp to aplikacja webowa do zarządzania planami dietetycznymi w małych firmach cateringowych. 
+System umożliwia tworzenie planów posiłków, zarządzanie subskrypcjami klientów oraz prognozowanie zakupów.
 
 ## Funkcjonalności
 - Zarządzanie składnikami i ich wartościami odżywczymi
-- Tworzenie i edycja dań z automatycznym obliczaniem wartości odżywczych
-- Tworzenie tygodniowych planów posiłków
-- Dynamiczne filtrowanie dań według typu diety
-- Automatyczne obliczanie dziennego bilansu makroskładników
-- Eksport planów do PDF
+- Tworzenie i edycja dań z automatycznym obliczaniem kosztów
+- Tworzenie tygodniowych planów dietetycznych (3 posiłki × 7 dni)
+- System subskrypcji dla klientów (tydzień/miesiąc/rok)
+- Prognozowanie zapotrzebowania na składniki z 7-dniowym wyprzedzeniem
+- Automatyczne generowanie list zakupów
+- Analiza przychodów i retencji klientów
+- System lojalnościowy z punktami
+- Płatności online przez Stripe (tryb testowy)
+- Eksport raportów do PDF
 
 ## Technologie
 - Django 5.2
-- Tailwind CSS
-- JavaScript
+- Vue.js 3
+- TailwindCSS
+- PostgreSQL
+- Stripe API
 
 ## Autorzy
 Marcin Malinowski
