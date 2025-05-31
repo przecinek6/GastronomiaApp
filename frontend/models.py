@@ -85,7 +85,6 @@ class Dish(models.Model):
     name = models.CharField(max_length=150)
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES, default='any')
     allergens = models.TextField(blank=True, help_text="Lista alergenów oddzielona przecinkami")
-    preparation_time = models.IntegerField(null=True, blank=True, help_text="Czas przygotowania w minutach")
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='dishes/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
