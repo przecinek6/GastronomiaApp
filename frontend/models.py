@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator
 from django.utils import timezone
 from decimal import Decimal
 import uuid
@@ -58,6 +58,10 @@ class Ingredient(models.Model):
     
     class Meta:
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['is_deleted']),
+        ]
     
     def __str__(self):
         return self.name
@@ -91,6 +95,10 @@ class Dish(models.Model):
     class Meta:
         ordering = ['name']
         verbose_name_plural = "Dishes"
+        indexes = [
+            models.Index(fields=['meal_type', 'is_deleted']),
+            models.Index(fields=['created_at']),
+        ]
     
     def __str__(self):
         return self.name
@@ -255,6 +263,12 @@ class Subscription(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['client', 'status']),
+            models.Index(fields=['start_date', 'end_date']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['stripe_subscription_id']),
+        ]
     
     def __str__(self):
         return f"{self.client.username} - {self.diet_plan.name} ({self.duration})"
