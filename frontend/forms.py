@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from datetime import date
+from frontend.models import Ingredient
 
 User = get_user_model()
 
@@ -133,3 +134,53 @@ class CustomLoginForm(forms.Form):
             'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
         })
     )
+
+
+class IngredientForm(forms.ModelForm):
+    class Meta:
+        model = Ingredient
+        fields = ['name', 'calories_per_100g', 'protein_per_100g', 'fat_per_100g', 'price_per_100g']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Stylowanie pól formularza
+        self.fields['name'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Nazwa składnika (np. Kurczak pierś)'
+        })
+        
+        self.fields['calories_per_100g'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Kalorie na 100g (np. 165)',
+            'step': '0.01',
+            'min': '0'
+        })
+        
+        self.fields['protein_per_100g'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Białko na 100g (np. 31.0)',
+            'step': '0.01',
+            'min': '0'
+        })
+        
+        self.fields['fat_per_100g'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Tłuszcze na 100g (np. 3.6)',
+            'step': '0.01',
+            'min': '0'
+        })
+        
+        self.fields['price_per_100g'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Cena za 100g (np. 12.50)',
+            'step': '0.01',
+            'min': '0'
+        })
+        
+        # Polskie etykiety
+        self.fields['name'].label = 'Nazwa składnika'
+        self.fields['calories_per_100g'].label = 'Kalorie na 100g'
+        self.fields['protein_per_100g'].label = 'Białko na 100g (g)'
+        self.fields['fat_per_100g'].label = 'Tłuszcze na 100g (g)'
+        self.fields['price_per_100g'].label = 'Cena za 100g (zł)'
