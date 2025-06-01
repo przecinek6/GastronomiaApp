@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ title }}</h1>
+            <p class="text-gray-600">
+                {% if ingredient %}
+                    Edytuj informacje o składniku
+                {% else %}
+                    Dodaj nowy składnik do bazy danych
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %} border rounded-lg p-4 mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Form -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="p-8">
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i data-lucide="info" class="w-5 h-5 mr-2 text-green-600"></i>
+                            Podstawowe informacje
+                        </h3>
+                        
+                        <!-- Name -->
+                        <div class="mb-6">
+                            <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                {{ form.name.label }} *
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {{ form.name.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <p class="text-gray-500 text-sm mt-1">Wprowadź pełną nazwę składnika, np. "Kurczak pierś bez skóry"</p>
+                        </div>
+                    </div>
+
+                    <!-- Nutritional Values -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i data-lucide="activity" class="w-5 h-5 mr-2 text-blue-600"></i>
+                            Wartości odżywcze na 100g
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Calories -->
+                            <div>
+                                <label for="{{ form.calories_per_100g.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.calories_per_100g.label }} *
+                                </label>
+                                {{ form.calories_per_100g }}
+                                {% if form.calories_per_100g.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.calories_per_100g.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <p class="text-gray-500 text-sm mt-1">Energia w kilokalorii</p>
+                            </div>
+
+                            <!-- Protein -->
+                            <div>
+                                <label for="{{ form.protein_per_100g.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.protein_per_100g.label }} *
+                                </label>
+                                {{ form.protein_per_100g }}
+                                {% if form.protein_per_100g.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.protein_per_100g.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <p class="text-gray-500 text-sm mt-1">Zawartość białka w gramach</p>
+                            </div>
+
+                            <!-- Fat -->
+                            <div>
+                                <label for="{{ form.fat_per_100g.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.fat_per_100g.label }} *
+                                </label>
+                                {{ form.fat_per_100g }}
+                                {% if form.fat_per_100g.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.fat_per_100g.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <p class="text-gray-500 text-sm mt-1">Zawartość tłuszczów w gramach</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i data-lucide="dollar-sign" class="w-5 h-5 mr-2 text-yellow-600"></i>
+                            Informacje cenowe
+                        </h3>
+                        
+                        <div class="max-w-md">
+                            <label for="{{ form.price_per_100g.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                {{ form.price_per_100g.label }} *
+                            </label>
+                            {{ form.price_per_100g }}
+                            {% if form.price_per_100g.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {{ form.price_per_100g.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <p class="text-gray-500 text-sm mt-1">Koszt zakupu 100g składnika (w złotych)</p>
+                        </div>
+                    </div>
+
+                    <!-- Form Buttons -->
+                    <div class="border-t pt-6">
+                        <div class="flex flex-col sm:flex-row gap-4 justify-end">
+                            <a href="{% url 'ingredient_list' %}" 
+                               class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                                <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
+                                Anuluj
+                            </a>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
+                                {{ submit_text }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Non-field errors -->
+                    {% if form.non_field_errors %}
+                        <div class="text-red-500 text-sm">
+                            {{ form.non_field_errors.0 }}
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                <i data-lucide="help-circle" class="w-5 h-5 mr-2"></i>
+                Wskazówki
+            </h3>
+            <ul class="space-y-2 text-blue-700">
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>Upewnij się, że nazwa składnika jest dokładna i opisowa</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>Wartości odżywcze powinny być podane na 100g produktu</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>Cena powinna uwzględniać wszystkie koszty zakupu</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>Wszystkie pola oznaczone * są wymagane</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Back Link -->
+        <div class="mt-8">
+            <a href="{% url 'ingredient_list' %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do listy składników
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Focus on first field
+    const firstField = document.querySelector('input[type="text"]');
+    if (firstField) {
+        firstField.focus();
+    }
+    
+    // Add input validation feedback
+    const numberInputs = document.querySelectorAll('input[type="number"]');
+    numberInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            if (value < 0) {
+                this.style.borderColor = '#ef4444';
+            } else {
+                this.style.borderColor = '#d1d5db';
+            }
+        });
+    });
+});
+</script>
+{% endblock content %}
