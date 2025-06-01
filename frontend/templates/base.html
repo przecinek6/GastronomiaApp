@@ -1,15 +1,224 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     {% load static %}
+    <meta name="description" content="GastronomiaApp - Najlepsze catering dietetyczny w Polsce. Zamów zdrowe posiłki dostosowane do Twoich potrzeb.">
+    <meta name="keywords" content="catering, dieta, zdrowe jedzenie, posiłki, dietetyczne">
+    {% load static %}
     <link rel="stylesheet" href="{% static 'disc/style.css' %}">
-    <title>{% block title %}{% endblock title %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <title>GastronomiaApp - {% block title %}{% endblock title %}</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: translateY(-5px);
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+        
+        .hero-pattern {
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
+            background-size: 60px 60px;
+            opacity: 0.3;
+        }
+        
+        .food-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f3f4f6' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
 </head>
-<body>
-    {% block content %}
-    
-    {% endblock content %}
+<body class="bg-gray-50 text-gray-800" id="app">
+    <!-- Navigation -->
+    <nav class="fixed w-full top-0 z-50 glass-effect shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">G</span>
+                        </div>
+                        <span class="text-xl font-bold text-gray-800">GastronomiaApp</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Strona główna</a>
+                    <a href="#plans" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Plany</a>
+                    <a href="#how-it-works" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Jak to działa</a>
+                    <a href="#contact" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Kontakt</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/login" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Logowanie</a>
+                    <a href="/register" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        Zamów teraz
+                    </a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-700 hover:text-green-600">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div v-show="mobileMenuOpen" class="md:hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="#home" class="block px-3 py-2 text-gray-700 hover:text-green-600">Strona główna</a>
+                <a href="#plans" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
+                <a href="#how-it-works" class="block px-3 py-2 text-gray-700 hover:text-green-600">Jak to działa</a>
+                <a href="#contact" class="block px-3 py-2 text-gray-700 hover:text-green-600">Kontakt</a>
+                <a href="/login" class="block px-3 py-2 text-gray-700 hover:text-green-600">Logowanie</a>
+                <a href="/register" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Zamów teraz</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-16">
+        {% block content %}
+        {% endblock content %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">G</span>
+                        </div>
+                        <span class="text-xl font-bold">GastronomiaApp</span>
+                    </div>
+                    <p class="text-gray-400 mb-6 max-w-md">
+                        Rewolucjonizujemy sposób zamawiania cateringu dietetycznego. 
+                        Zdrowe posiłki dostosowane do Twoich potrzeb, dostarczane prosto do Twoich drzwi.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="facebook" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="instagram" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="twitter" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Szybkie linki</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#plans" class="hover:text-white transition-colors">Plany dietetyczne</a></li>
+                        <li><a href="#how-it-works" class="hover:text-white transition-colors">Jak to działa</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">O nas</a></li>
+                        <li><a href="#contact" class="hover:text-white transition-colors">Kontakt</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Pomoc</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Regulamin</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Polityka prywatności</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Zwroty</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 GastronomiaApp. Wszystkie prawa zastrzeżone. Made by Marcin Malinowski</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    mobileMenuOpen: false,
+                    currentPlan: 'standard',
+                    duration: 'week'
+                }
+            },
+            mounted() {
+                // Initialize Lucide icons
+                lucide.createIcons();
+                
+                // Intersection Observer for animations
+                const observerOptions = {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                };
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('fade-in');
+                        }
+                    });
+                }, observerOptions);
+                
+                // Observe all elements with data-animate attribute
+                document.querySelectorAll('[data-animate]').forEach(el => {
+                    observer.observe(el);
+                });
+            },
+            methods: {
+                scrollToSection(sectionId) {
+                    document.getElementById(sectionId)?.scrollIntoView({ 
+                        behavior: 'smooth' 
+                    });
+                    this.mobileMenuOpen = false;
+                }
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>
