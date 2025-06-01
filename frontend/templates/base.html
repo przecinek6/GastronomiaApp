@@ -80,19 +80,19 @@
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Strona główna</a>
-                    <a href="#plans" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Plany</a>
-                    <a href="#how-it-works" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Jak to działa</a>
-                    <a href="#contact" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Kontakt</a>
+                    <a href="{% url 'home_page' %}#home" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Strona główna</a>
+                    <a href="{% url 'home_page' %}#plans" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Plany</a>
+                    <a href="{% url 'home_page' %}#how-it-works" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Jak to działa</a>
+                    <a href="{% url 'home_page' %}#contact" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Kontakt</a>
                 </div>
-                
+
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <span class="text-gray-700">Witaj, {{ user.first_name|default:user.username }}!</span>
+                        {% comment %} <span class="text-gray-700">Witaj, {{ user.first_name|default:user.username }}!</span> {% endcomment %}
                         <a href="{% url 'logout_view' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Wyloguj</a>
                         {% if user.userprofile.role == 'manager' %}
-                            <a href="/admin/" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                                Admin Panel
+                            <a href={% url 'manage_dashboard' %} class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                Panel menadżera
                             </a>
                         {% else %}
                             <a href="#plans" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
@@ -119,17 +119,16 @@
         <!-- Mobile menu -->
         <div v-show="mobileMenuOpen" class="md:hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="#home" class="block px-3 py-2 text-gray-700 hover:text-green-600">Strona główna</a>
-                <a href="#plans" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
-                <a href="#how-it-works" class="block px-3 py-2 text-gray-700 hover:text-green-600">Jak to działa</a>
-                <a href="#contact" class="block px-3 py-2 text-gray-700 hover:text-green-600">Kontakt</a>
+                <a href="{% url 'home_page' %}#home" class="block px-3 py-2 text-gray-700 hover:text-green-600">Strona główna</a>
+                <a href="{% url 'home_page' %}#plans" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
+                <a href="{% url 'home_page' %}#how-it-works" class="block px-3 py-2 text-gray-700 hover:text-green-600">Jak to działa</a>
+                <a href="{% url 'home_page' %}#contact" class="block px-3 py-2 text-gray-700 hover:text-green-600">Kontakt</a>
                 {% if user.is_authenticated %}
-                    <span class="block px-3 py-2 text-gray-700">Witaj, {{ user.first_name|default:user.username }}!</span>
                     <a href="{% url 'logout_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Wyloguj</a>
                     {% if user.userprofile.role == 'manager' %}
-                        <a href="/admin/" class="block px-3 py-2 bg-purple-500 text-white rounded-lg">Panel admin</a>
+                        <a href={% url 'manage_dashboard' %} class="block px-3 py-2 bg-purple-500 text-white rounded-lg">Panel menadżera</a>
                     {% else %}
-                        <a href="#plans" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Moje zamówienia</a>
+                        <a href="#plans" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Panel użytkownika</a>
                     {% endif %}
                 {% else %}
                     <a href="{% url 'login_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Logowanie</a>
