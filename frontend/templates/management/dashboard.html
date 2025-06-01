@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Panel menadżera{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Dashboard zarządzania</h1>
+            <p class="text-gray-600">Witaj w panelu zarządzania GastronomiaApp</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Składniki</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_ingredients }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center">
+                        <i data-lucide="package" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Dania</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_dishes }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
+                        <i data-lucide="chef-hat" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Plany dietetyczne</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_plans }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
+                        <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Aktywne subskrypcje</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ active_subscriptions }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl flex items-center justify-center">
+                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Szybkie akcje</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <a href="{% url 'ingredient_list' %}" 
+                   class="flex items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all duration-200 group">
+                    <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="package" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Zarządzaj składnikami</h3>
+                        <p class="text-sm text-gray-600">Dodaj, edytuj i usuwaj składniki</p>
+                    </div>
+                </a>
+
+                <a href="#" 
+                   class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 group opacity-50 cursor-not-allowed">
+                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-4">
+                        <i data-lucide="chef-hat" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Zarządzaj daniami</h3>
+                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
+                    </div>
+                </a>
+
+                <a href="#" 
+                   class="flex items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 group opacity-50 cursor-not-allowed">
+                    <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-4">
+                        <i data-lucide="calendar" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Plany dietetyczne</h3>
+                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
+                    </div>
+                </a>
+
+                <a href="#" 
+                   class="flex items-center p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl hover:from-orange-100 hover:to-orange-200 transition-all duration-200 group opacity-50 cursor-not-allowed">
+                    <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Lista zakupów</h3>
+                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
+                    </div>
+                </a>
+
+                <a href="#" 
+                   class="flex items-center p-4 bg-gradient-to-r from-pink-50 to-pink-100 rounded-xl hover:from-pink-100 hover:to-pink-200 transition-all duration-200 group opacity-50 cursor-not-allowed">
+                    <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center mr-4">
+                        <i data-lucide="bar-chart" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Raporty</h3>
+                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
+                    </div>
+                </a>
+
+                <a href="/admin/" 
+                   class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:from-gray-100 hover:to-gray-200 transition-all duration-200 group">
+                    <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="settings" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Panel administracyjny</h3>
+                        <p class="text-sm text-gray-600">Zaawansowane zarządzanie</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity (placeholder) -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Ostatnia aktywność</h2>
+            <div class="text-center py-8">
+                <i data-lucide="activity" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                <p class="text-gray-600">Brak ostatniej aktywności do wyświetlenia</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}
