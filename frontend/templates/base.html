@@ -87,10 +87,24 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    <a href="/login" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Logowanie</a>
-                    <a href="/register" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                        Zamów teraz
-                    </a>
+                    {% if user.is_authenticated %}
+                        <span class="text-gray-700">Witaj, {{ user.first_name|default:user.username }}!</span>
+                        <a href="{% url 'logout_view' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Wyloguj</a>
+                        {% if user.userprofile.role == 'manager' %}
+                            <a href="/admin/" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                Admin Panel
+                            </a>
+                        {% else %}
+                            <a href="#plans" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                Panel użytkownika
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'login_view' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Logowanie</a>
+                        <a href="{% url 'register' %}" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                            Zamów teraz
+                        </a>
+                    {% endif %}
                 </div>
                 
                 <!-- Mobile menu button -->
@@ -109,8 +123,18 @@
                 <a href="#plans" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
                 <a href="#how-it-works" class="block px-3 py-2 text-gray-700 hover:text-green-600">Jak to działa</a>
                 <a href="#contact" class="block px-3 py-2 text-gray-700 hover:text-green-600">Kontakt</a>
-                <a href="/login" class="block px-3 py-2 text-gray-700 hover:text-green-600">Logowanie</a>
-                <a href="/register" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Zamów teraz</a>
+                {% if user.is_authenticated %}
+                    <span class="block px-3 py-2 text-gray-700">Witaj, {{ user.first_name|default:user.username }}!</span>
+                    <a href="{% url 'logout_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Wyloguj</a>
+                    {% if user.userprofile.role == 'manager' %}
+                        <a href="/admin/" class="block px-3 py-2 bg-purple-500 text-white rounded-lg">Panel admin</a>
+                    {% else %}
+                        <a href="#plans" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Moje zamówienia</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Logowanie</a>
+                    <a href="{% url 'register' %}" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Zamów teraz</a>
+                {% endif %}
             </div>
         </div>
     </nav>
