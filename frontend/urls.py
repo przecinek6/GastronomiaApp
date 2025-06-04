@@ -16,4 +16,14 @@ urlpatterns = [
     path('manage/ingredients/add/', views.ingredient_add, name='ingredient_add'),
     path('manage/ingredients/<int:pk>/edit/', views.ingredient_edit, name='ingredient_edit'),
     path('manage/ingredients/<int:pk>/delete/', views.ingredient_delete, name='ingredient_delete'),
+    
+    # Zarządzanie daniami
+    path('manage/dishes/', views.dish_list, name='dish_list'),
+    path('manage/dishes/add/', views.dish_add, name='dish_add'),
+    path('manage/dishes/<int:pk>/edit/', views.dish_edit, name='dish_edit'),
+    path('manage/dishes/<int:pk>/delete/', views.dish_delete, name='dish_delete'),
+    
+    # API endpointy
+    path('api/ingredient/<int:ingredient_id>/', views.ingredient_data_api, name='ingredient_data_api'),
+    path('api/ingredients/', views.ingredients_list_api, name='ingredients_list_api'),
 ]
