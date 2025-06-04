@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from datetime import date
-from frontend.models import Ingredient
+from frontend.models import Ingredient, Dish, DishIngredient
 
 User = get_user_model()
 
@@ -184,3 +184,110 @@ class IngredientForm(forms.ModelForm):
         self.fields['protein_per_100g'].label = 'Białko na 100g (g)'
         self.fields['fat_per_100g'].label = 'Tłuszcze na 100g (g)'
         self.fields['price_per_100g'].label = 'Cena za 100g (zł)'
+
+
+class DishForm(forms.ModelForm):
+    class Meta:
+        model = Dish
+        fields = ['name', 'meal_type', 'allergens', 'description', 'image']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Stylowanie pól formularza
+        self.fields['name'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Nazwa dania (np. Pierś kurczaka z ryżem)'
+        })
+        
+        self.fields['meal_type'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors'
+        })
+        
+        self.fields['allergens'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Lista alergenów oddzielona przecinkami (np. gluten, laktoza)',
+            'rows': 3
+        })
+        
+        self.fields['description'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Opis dania...',
+            'rows': 4
+        })
+        
+        self.fields['image'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'accept': 'image/*'
+        })
+        
+        # Polskie etykiety
+        self.fields['name'].label = 'Nazwa dania'
+        self.fields['meal_type'].label = 'Typ posiłku'
+        self.fields['allergens'].label = 'Alergeny'
+        self.fields['description'].label = 'Opis'
+        self.fields['image'].label = 'Zdjęcie dania'
+        
+        # Opcjonalne pola
+        self.fields['allergens'].required = False
+        self.fields['description'].required = False
+        self.fields['image'].required = False
+
+
+class DishIngredientForm(forms.Form):
+    ingredient = forms.ModelChoiceField(
+        queryset=Ingredient.objects.filter(is_deleted=False),
+        empty_label="Wybierz składnik...",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors ingredient-select'
+        })
+    )
+    
+    quantity_grams = forms.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        min_value=0.01,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors quantity-input',
+            'placeholder': 'Ilość w gramach',
+            'step': '0.01',
+            'min': '0.01'
+        })
+    )
+    
+    DELETE = forms.BooleanField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['ingredient'].label = 'Składnik'
+        self.fields['quantity_grams'].label = 'Ilość (g)'
+
+
+class DishIngredientFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+    def clean(self):
+        """Sprawdza czy zostały dodane jakieś składniki"""
+        if any(self.errors):
+            return
+            
+        active_forms = 0
+        for form in self.forms:
+            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                active_forms += 1
+                
+        if active_forms == 0:
+            raise ValidationError('Danie musi zawierać przynajmniej jeden składnik.')
+
+
+# Tworzenie formset dla składników w daniu
+DishIngredientFormSet = forms.formset_factory(
+    DishIngredientForm,
+    formset=DishIngredientFormSet,
+    extra=1,
+    can_delete=True
+)
