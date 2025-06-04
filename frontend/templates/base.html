@@ -95,8 +95,8 @@
                                 Panel menadżera
                             </a>
                         {% else %}
-                            <a href="#plans" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                                Panel użytkownika
+                            <a href="{% url 'client_dashboard' %}" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                Panel klienta
                             </a>
                         {% endif %}
                     {% else %}
@@ -128,7 +128,7 @@
                     {% if user.userprofile.role == 'manager' %}
                         <a href={% url 'manage_dashboard' %} class="block px-3 py-2 bg-purple-500 text-white rounded-lg">Panel menadżera</a>
                     {% else %}
-                        <a href="#plans" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Panel użytkownika</a>
+                        <a href="{% url 'client_dashboard' %}" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Panel klienta</a>
                     {% endif %}
                 {% else %}
                     <a href="{% url 'login_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Logowanie</a>
