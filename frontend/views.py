@@ -67,10 +67,10 @@ def login_view(request):
                     if user.userprofile.role == 'manager':
                         return redirect('manage_dashboard')
                     else:
-                        return redirect('home_page')
+                        return redirect('client_dashboard')
                 except UserProfile.DoesNotExist:
                     UserProfile.objects.create(user=user, role='client')
-                    return redirect('home_page')
+                    return redirect('client_dashboard')
             else:
                 messages.error(request, 'Nieprawidłowe dane logowania.')
     else:
@@ -672,6 +672,49 @@ def diet_plan_delete(request, pk):
     })
 
 
+def user_is_client(user):
+    """Sprawdza czy użytkownik jest klientem"""
+    try:
+        return user.is_authenticated and user.userprofile.role == 'client'
+    except UserProfile.DoesNotExist:
+        return False
+
+# ==========================================
+# PANEL KLIENTA
+# ==========================================
+
+@login_required
+def client_dashboard(request):
+    """Dashboard dla klientów"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Pobierz dane klienta
+    try:
+        loyalty_account = request.user.loyaltyaccount
+    except:
+        # Utwórz konto lojalnościowe jeśli nie istnieje
+        from frontend.models import LoyaltyAccount
+        loyalty_account = LoyaltyAccount.objects.create(
+            user=request.user,
+            points_balance=0,
+            total_points_earned=0,
+            loyalty_level='bronze'
+        )
+    
+    # Podstawowe statystyki (na razie mock data)
+    context = {
+        'active_subscriptions': 0,  # Dodamy później gdy będą subskrypcje
+        'loyalty_points': loyalty_account.points_balance,
+        'loyalty_level': loyalty_account.get_loyalty_level_display(),
+        'loyalty_value': loyalty_account.points_balance // 10,  # 10 punktów = 1 zł
+        'total_orders': 0,  # Dodamy później
+        'total_saved': 0,  # Dodamy później
+        'referral_code': f'USER{request.user.id:03d}',  # Prosty kod polecający
+    }
+    
+    return render(request, 'client/dashboard.html', context)
 
 
 # ==========================================
