@@ -1,11 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
-from frontend.models import UserProfile, Ingredient
-from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm
+from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from frontend.models import UserProfile, Ingredient, Dish, DishIngredient
+from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet
 import traceback
 
 User = get_user_model()
@@ -98,12 +101,16 @@ def manage_dashboard(request):
     # Podstawowe statystyki
     context = {
         'total_ingredients': Ingredient.objects.filter(is_deleted=False).count(),
-        'total_dishes': 0,  # Dodamy później
+        'total_dishes': Dish.objects.filter(is_deleted=False).count(),
         'total_plans': 0,   # Dodamy później
         'active_subscriptions': 0,  # Dodamy później
     }
     
     return render(request, 'management/dashboard.html', context)
+
+# ==========================================
+# ZARZĄDZANIE SKŁADNIKAMI
+# ==========================================
 
 @login_required
 def ingredient_list(request):
@@ -181,11 +188,7 @@ def ingredient_edit(request, pk):
         messages.error(request, 'Nie masz uprawnień do tej strony.')
         return redirect('home_page')
     
-    try:
-        ingredient = Ingredient.objects.get(pk=pk)
-    except Ingredient.DoesNotExist:
-        messages.error(request, 'Składnik nie został znaleziony.')
-        return redirect('ingredient_list')
+    ingredient = get_object_or_404(Ingredient, pk=pk)
     
     if request.method == 'POST':
         form = IngredientForm(request.POST, instance=ingredient)
@@ -210,11 +213,7 @@ def ingredient_delete(request, pk):
         messages.error(request, 'Nie masz uprawnień do tej strony.')
         return redirect('home_page')
     
-    try:
-        ingredient = Ingredient.objects.get(pk=pk)
-    except Ingredient.DoesNotExist:
-        messages.error(request, 'Składnik nie został znaleziony.')
-        return redirect('ingredient_list')
+    ingredient = get_object_or_404(Ingredient, pk=pk)
     
     if request.method == 'POST':
         if ingredient.is_deleted:
@@ -232,3 +231,242 @@ def ingredient_delete(request, pk):
     return render(request, 'management/ingredients/confirm_delete.html', {
         'ingredient': ingredient
     })
+
+# ==========================================
+# ZARZĄDZANIE DANIAMI
+# ==========================================
+
+@login_required
+def dish_list(request):
+    """Lista dań z paginacją i wyszukiwaniem"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Parametry z GET
+    search = request.GET.get('search', '')
+    per_page = request.GET.get('per_page', '25')
+    show_deleted = request.GET.get('show_deleted', False)
+    meal_type = request.GET.get('meal_type', '')
+    
+    # Walidacja per_page
+    if per_page not in ['10', '25', '50']:
+        per_page = '25'
+    
+    # Bazowe query z prefetch dla optymalizacji
+    dishes = Dish.objects.prefetch_related('dishingredient_set__ingredient').all()
+    
+    # Filtrowanie usuniętych
+    if not show_deleted:
+        dishes = dishes.filter(is_deleted=False)
+    
+    # Wyszukiwanie
+    if search:
+        dishes = dishes.filter(
+            Q(name__icontains=search) | Q(description__icontains=search)
+        )
+    
+    # Filtrowanie po typie posiłku
+    if meal_type:
+        dishes = dishes.filter(meal_type=meal_type)
+    
+    # Sortowanie
+    dishes = dishes.order_by('name')
+    
+    # Paginacja
+    paginator = Paginator(dishes, int(per_page))
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search': search,
+        'per_page': per_page,
+        'show_deleted': show_deleted,
+        'meal_type': meal_type,
+        'meal_type_choices': Dish.MEAL_TYPE_CHOICES,
+        'total_count': dishes.count(),
+    }
+    
+    return render(request, 'management/dishes/list.html', context)
+
+@login_required
+def dish_add(request):
+    """Dodawanie nowego dania"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    if request.method == 'POST':
+        form = DishForm(request.POST, request.FILES)
+        ingredient_formset = DishIngredientFormSet(request.POST, prefix='ingredients')
+        
+        if form.is_valid() and ingredient_formset.is_valid():
+            try:
+                with transaction.atomic():
+                    # Zapisz danie
+                    dish = form.save()
+                    
+                    # Zapisz składniki
+                    for ingredient_form in ingredient_formset:
+                        if ingredient_form.cleaned_data and not ingredient_form.cleaned_data.get('DELETE', False):
+                            ingredient = ingredient_form.cleaned_data['ingredient']
+                            quantity = ingredient_form.cleaned_data['quantity_grams']
+                            
+                            DishIngredient.objects.create(
+                                dish=dish,
+                                ingredient=ingredient,
+                                quantity_grams=quantity
+                            )
+                    
+                    messages.success(request, f'Danie "{dish.name}" zostało dodane pomyślnie.')
+                    return redirect('dish_list')
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas zapisywania: {str(e)}')
+    else:
+        form = DishForm()
+        ingredient_formset = DishIngredientFormSet(prefix='ingredients')
+    
+    return render(request, 'management/dishes/form.html', {
+        'form': form,
+        'ingredient_formset': ingredient_formset,
+        'title': 'Dodaj danie',
+        'submit_text': 'Dodaj danie'
+    })
+
+@login_required
+def dish_edit(request, pk):
+    """Edycja dania"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    dish = get_object_or_404(Dish, pk=pk)
+    
+    if request.method == 'POST':
+        form = DishForm(request.POST, request.FILES, instance=dish)
+        ingredient_formset = DishIngredientFormSet(request.POST, prefix='ingredients')
+        
+        if form.is_valid() and ingredient_formset.is_valid():
+            try:
+                with transaction.atomic():
+                    # Zapisz danie
+                    dish = form.save()
+                    
+                    # Usuń stare składniki
+                    DishIngredient.objects.filter(dish=dish).delete()
+                    
+                    # Zapisz nowe składniki
+                    for ingredient_form in ingredient_formset:
+                        if ingredient_form.cleaned_data and not ingredient_form.cleaned_data.get('DELETE', False):
+                            ingredient = ingredient_form.cleaned_data['ingredient']
+                            quantity = ingredient_form.cleaned_data['quantity_grams']
+                            
+                            DishIngredient.objects.create(
+                                dish=dish,
+                                ingredient=ingredient,
+                                quantity_grams=quantity
+                            )
+                    
+                    messages.success(request, f'Danie "{dish.name}" zostało zaktualizowane.')
+                    return redirect('dish_list')
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas zapisywania: {str(e)}')
+    else:
+        form = DishForm(instance=dish)
+        
+        # Przygotuj dane dla formset na podstawie istniejących składników
+        initial_data = []
+        for dish_ingredient in dish.dishingredient_set.all():
+            initial_data.append({
+                'ingredient': dish_ingredient.ingredient.id,
+                'quantity_grams': dish_ingredient.quantity_grams
+            })
+        
+        ingredient_formset = DishIngredientFormSet(
+            initial=initial_data,
+            prefix='ingredients'
+        )
+    
+    return render(request, 'management/dishes/form.html', {
+        'form': form,
+        'ingredient_formset': ingredient_formset,
+        'dish': dish,
+        'title': f'Edytuj danie: {dish.name}',
+        'submit_text': 'Zaktualizuj danie'
+    })
+
+@login_required
+def dish_delete(request, pk):
+    """Soft delete dania"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    dish = get_object_or_404(Dish, pk=pk)
+    
+    if request.method == 'POST':
+        if dish.is_deleted:
+            # Przywróć danie
+            dish.is_deleted = False
+            dish.save()
+            messages.success(request, f'Danie "{dish.name}" zostało przywrócone.')
+        else:
+            # Usuń danie (soft delete)
+            dish.delete()  # Korzysta z custom delete() method z modelu
+            messages.success(request, f'Danie "{dish.name}" zostało usunięte.')
+        
+        return redirect('dish_list')
+    
+    return render(request, 'management/dishes/confirm_delete.html', {
+        'dish': dish
+    })
+
+# ==========================================
+# API ENDPOINTY
+# ==========================================
+
+@login_required
+@require_GET
+def ingredient_data_api(request, ingredient_id):
+    """API endpoint do pobierania danych składnika"""
+    if not user_is_manager(request.user):
+        return JsonResponse({'error': 'Brak uprawnień'}, status=403)
+    
+    try:
+        ingredient = Ingredient.objects.get(id=ingredient_id, is_deleted=False)
+        data = {
+            'name': ingredient.name,
+            'calories_per_100g': float(ingredient.calories_per_100g),
+            'protein_per_100g': float(ingredient.protein_per_100g),
+            'fat_per_100g': float(ingredient.fat_per_100g),
+            'price_per_100g': float(ingredient.price_per_100g)
+        }
+        return JsonResponse(data)
+    except Ingredient.DoesNotExist:
+        return JsonResponse({'error': 'Składnik nie znaleziony'}, status=404)
+
+@login_required
+@require_GET
+def ingredients_list_api(request):
+    """API endpoint do pobierania listy składników"""
+    if not user_is_manager(request.user):
+        return JsonResponse({'error': 'Brak uprawnień'}, status=403)
+    
+    ingredients = Ingredient.objects.filter(is_deleted=False).values(
+        'id', 'name', 'calories_per_100g', 'protein_per_100g', 'fat_per_100g', 'price_per_100g'
+    )
+    
+    # Konwertuj Decimal na float dla JSON
+    data = []
+    for ingredient in ingredients:
+        data.append({
+            'id': ingredient['id'],
+            'name': ingredient['name'],
+            'calories_per_100g': float(ingredient['calories_per_100g']),
+            'protein_per_100g': float(ingredient['protein_per_100g']),
+            'fat_per_100g': float(ingredient['fat_per_100g']),
+            'price_per_100g': float(ingredient['price_per_100g'])
+        })
+    
+    return JsonResponse({'ingredients': data})
