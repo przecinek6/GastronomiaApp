@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ title }}</h1>
+            <p class="text-gray-600">
+                {% if diet_plan %}
+                    Edytuj plan dietetyczny - skonfiguruj wszystkie aspekty na jednej stronie
+                {% else %}
+                    Stwórz nowy plan dietetyczny - skonfiguruj posiłki, wycenę i ustawienia
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %} border rounded-lg p-4 mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" id="diet-plan-form">
+            {% csrf_token %}
+            
+            <!-- 1. PODSTAWOWE INFORMACJE -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i data-lucide="info" class="w-5 h-5 mr-2 text-green-600"></i>
+                    1. Podstawowe informacje
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Name -->
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            {{ form.name.label }} *
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Active Status -->
+                    <div class="flex items-center pt-8">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                            {{ form.is_active.label }}
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mt-6">
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ form.description.label }} *
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 2. SIATKA POSIŁKÓW -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i data-lucide="grid-3x3" class="w-5 h-5 mr-2 text-blue-600"></i>
+                            2. Siatka posiłków (3×7)
+                        </h2>
+                        <button type="button" id="clear-all" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4 inline mr-1"></i>
+                            Wyczyść wszystko
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Dzień</th>
+                                {% for meal_type, meal_name in meal_types %}
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">{{ meal_name }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for day_data in grid_data %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 font-medium text-gray-800">{{ day_data.day_name }}</td>
+                                    {% for meal_type, meal_name in meal_types %}
+                                        <td class="px-4 py-3">
+                                            <div class="meal-slot" data-day="{{ day_data.day_num }}" data-meal="{{ meal_type }}">
+                                                <select name="meal_{{ day_data.day_num }}_{{ meal_type }}" 
+                                                        class="meal-select w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors"
+                                                        data-day="{{ day_data.day_num }}" 
+                                                        data-meal="{{ meal_type }}">
+                                                    <option value="">Wybierz danie...</option>
+                                                    {% for dish in dishes %}
+                                                        {% if dish.meal_type == meal_type or dish.meal_type == 'any' %}
+                                                            <option value="{{ dish.id }}" 
+                                                                    {% if day_data.meals.breakfast and meal_type == 'breakfast' and day_data.meals.breakfast.dish.id == dish.id %}selected{% endif %}
+                                                                    {% if day_data.meals.lunch and meal_type == 'lunch' and day_data.meals.lunch.dish.id == dish.id %}selected{% endif %}
+                                                                    {% if day_data.meals.dinner and meal_type == 'dinner' and day_data.meals.dinner.dish.id == dish.id %}selected{% endif %}
+                                                                    data-calories="{{ dish.total_calories }}"
+                                                                    data-protein="{{ dish.total_protein }}"
+                                                                    data-fat="{{ dish.total_fat }}"
+                                                                    data-cost="{{ dish.total_cost }}">
+                                                                {{ dish.name }}
+                                                            </option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                                
+                                                <!-- Dish info -->
+                                                <div class="meal-info mt-2 text-xs text-gray-500 hidden">
+                                                    <div class="flex justify-between">
+                                                        <span class="calories">0 kcal</span>
+                                                        <span class="cost">0.00 zł</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. SZYBKIE AKCJE -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i data-lucide="zap" class="w-5 h-5 mr-2 text-yellow-600"></i>
+                    3. Szybkie akcje
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button type="button" id="fill-breakfasts" class="bg-yellow-500 text-white p-4 rounded-lg hover:bg-yellow-600 transition-colors">
+                        <i data-lucide="sunrise" class="w-5 h-5 inline mr-2"></i>
+                        Wypełnij śniadania
+                    </button>
+                    <button type="button" id="fill-lunches" class="bg-orange-500 text-white p-4 rounded-lg hover:bg-orange-600 transition-colors">
+                        <i data-lucide="sun" class="w-5 h-5 inline mr-2"></i>
+                        Wypełnij obiady
+                    </button>
+                    <button type="button" id="fill-dinners" class="bg-purple-500 text-white p-4 rounded-lg hover:bg-purple-600 transition-colors">
+                        <i data-lucide="moon" class="w-5 h-5 inline mr-2"></i>
+                        Wypełnij kolacje
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. PODSUMOWANIE PLANU -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i data-lucide="calculator" class="w-5 h-5 mr-2 text-purple-600"></i>
+                    4. Podsumowanie planu
+                </h2>
+
+                <div id="plan-summary" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-blue-800" id="total-meals">0/21</div>
+                        <div class="text-sm text-blue-600">Posiłki</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-green-800" id="avg-calories">0</div>
+                        <div class="text-sm text-green-600">Śr. kcal/dzień</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-yellow-800" id="avg-protein">0g</div>
+                        <div class="text-sm text-yellow-600">Śr. białko/dzień</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-purple-800" id="avg-fat">0g</div>
+                        <div class="text-sm text-purple-600">Śr. tłuszcze/dzień</div>
+                    </div>
+                    <div class="bg-red-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-red-800" id="weekly-cost">0.00zł</div>
+                        <div class="text-sm text-red-600">Koszt tygodniowy</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. CENNIK -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i data-lucide="dollar-sign" class="w-5 h-5 mr-2 text-green-600"></i>
+                    5. Cennik
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Weekly Price Input -->
+                    <div>
+                        <label for="{{ form.weekly_price.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            {{ form.weekly_price.label }} *
+                        </label>
+                        {{ form.weekly_price }}
+                        {% if form.weekly_price.errors %}
+                            <div class="text-red-500 text-sm mt-1">{{ form.weekly_price.errors.0 }}</div>
+                        {% endif %}
+                        <div class="mt-2">
+                            <button type="button" id="use-suggested-price" class="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors">
+                                Użyj sugerowanej ceny
+                            </button>
+                            <span class="text-xs text-gray-500 ml-2">(koszt + 50% marża)</span>
+                        </div>
+                    </div>
+
+                    <!-- Price Preview -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Podgląd cen dla klienta</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Tydzień:</span>
+                                <span class="text-sm font-medium" id="price-week">0.00 zł</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Miesiąc (4 tyg.):</span>
+                                <span class="text-sm font-medium" id="price-month">0.00 zł</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Rok (50 tyg.):</span>
+                                <span class="text-sm font-medium" id="price-year">0.00 zł</span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Marża tygodniowa:</span>
+                                <span class="text-sm font-medium" id="weekly-margin">0.00 zł</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. USTAWIENIA I ZAPISZ -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                <div class="flex flex-col sm:flex-row gap-6 justify-between items-start">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i data-lucide="settings" class="w-5 h-5 mr-2 text-gray-600"></i>
+                            6. Finalizacja
+                        </h2>
+                        <p class="text-sm text-gray-600 mb-4">Sprawdź wszystkie dane i zapisz plan dietetyczny.</p>
+                        
+                        <!-- Validation Status -->
+                        <div id="validation-status" class="mb-4">
+                            <div class="hidden" id="validation-success">
+                                <div class="flex items-center text-green-600">
+                                    <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>
+                                    <span class="text-sm">Plan jest gotowy do zapisania</span>
+                                </div>
+                            </div>
+                            <div id="validation-warnings">
+                                <div class="flex items-center text-yellow-600">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 mr-2"></i>
+                                    <span class="text-sm">Uzupełnij wymagane pola</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="{% url 'diet_plan_list' %}" 
+                           class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
+                            Anuluj
+                        </a>
+                        <button type="submit" 
+                                class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                            <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
+                            {{ submit_text }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Non-field errors -->
+                {% if form.non_field_errors %}
+                    <div class="text-red-500 text-sm mt-4">{{ form.non_field_errors.0 }}</div>
+                {% endif %}
+            </div>
+        </form>
+
+        <!-- Back Link -->
+        <div class="mt-8">
+            <a href="{% url 'diet_plan_list' %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do listy planów
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Dish data for calculations
+    const dishData = {};
+    
+    // Load dish data from DOM
+    document.querySelectorAll('.meal-select option[value]').forEach(option => {
+        if (option.value) {
+            dishData[option.value] = {
+                calories: parseFloat(option.dataset.calories) || 0,
+                protein: parseFloat(option.dataset.protein) || 0,
+                fat: parseFloat(option.dataset.fat) || 0,
+                cost: parseFloat(option.dataset.cost) || 0
+            };
+        }
+    });
+    
+    // Price inputs
+    const weeklyPriceInput = document.getElementById('{{ form.weekly_price.id_for_label }}');
+    const priceWeek = document.getElementById('price-week');
+    const priceMonth = document.getElementById('price-month');
+    const priceYear = document.getElementById('price-year');
+    const weeklyMargin = document.getElementById('weekly-margin');
+    
+    let currentWeeklyCost = 0;
+    
+    // Update meal info display
+    function updateMealInfo(selectElement) {
+        const dishId = selectElement.value;
+        const infoDiv = selectElement.parentElement.querySelector('.meal-info');
+        
+        if (dishId && dishData[dishId]) {
+            const dish = dishData[dishId];
+            infoDiv.querySelector('.calories').textContent = `${dish.calories.toFixed(0)} kcal`;
+            infoDiv.querySelector('.cost').textContent = `${dish.cost.toFixed(2)} zł`;
+            infoDiv.classList.remove('hidden');
+        } else {
+            infoDiv.classList.add('hidden');
+        }
+    }
+    
+    // Update plan summary
+    function updatePlanSummary() {
+        let totalMeals = 0;
+        let totalCalories = 0;
+        let totalProtein = 0;
+        let totalFat = 0;
+        let totalCost = 0;
+        
+        document.querySelectorAll('.meal-select').forEach(select => {
+            if (select.value && dishData[select.value]) {
+                const dish = dishData[select.value];
+                totalMeals++;
+                totalCalories += dish.calories;
+                totalProtein += dish.protein;
+                totalFat += dish.fat;
+                totalCost += dish.cost;
+            }
+        });
+        
+        const avgCalories = totalMeals > 0 ? totalCalories / 7 : 0;
+        const avgProtein = totalMeals > 0 ? totalProtein / 7 : 0;
+        const avgFat = totalMeals > 0 ? totalFat / 7 : 0;
+        
+        document.getElementById('total-meals').textContent = `${totalMeals}/21`;
+        document.getElementById('avg-calories').textContent = Math.round(avgCalories);
+        document.getElementById('avg-protein').textContent = `${avgProtein.toFixed(1)}g`;
+        document.getElementById('avg-fat').textContent = `${avgFat.toFixed(1)}g`;
+        document.getElementById('weekly-cost').textContent = `${totalCost.toFixed(2)}zł`;
+        
+        currentWeeklyCost = totalCost;
+        updatePrices();
+        updateValidation();
+    }
+    
+    // Update price calculations
+    function updatePrices() {
+        const weeklyPrice = parseFloat(weeklyPriceInput.value) || 0;
+        const monthlyPrice = weeklyPrice * 4;
+        const yearlyPrice = weeklyPrice * 50;
+        const margin = weeklyPrice - currentWeeklyCost;
+        
+        priceWeek.textContent = weeklyPrice.toFixed(2) + ' zł';
+        priceMonth.textContent = monthlyPrice.toFixed(2) + ' zł';
+        priceYear.textContent = yearlyPrice.toFixed(2) + ' zł';
+        weeklyMargin.textContent = margin.toFixed(2) + ' zł';
+        
+        // Color margin based on profitability
+        if (margin > 0) {
+            weeklyMargin.className = 'text-sm font-medium text-green-600';
+        } else if (margin < 0) {
+            weeklyMargin.className = 'text-sm font-medium text-red-600';
+        } else {
+            weeklyMargin.className = 'text-sm font-medium text-gray-600';
+        }
+    }
+    
+    // Update validation status
+    function updateValidation() {
+        const name = document.getElementById('{{ form.name.id_for_label }}').value.trim();
+        const description = document.getElementById('{{ form.description.id_for_label }}').value.trim();
+        const weeklyPrice = parseFloat(weeklyPriceInput.value) || 0;
+        const totalMeals = Array.from(document.querySelectorAll('.meal-select')).filter(s => s.value).length;
+        
+        const validationSuccess = document.getElementById('validation-success');
+        const validationWarnings = document.getElementById('validation-warnings');
+        
+        if (name && description && weeklyPrice > 0 && totalMeals > 0) {
+            validationSuccess.classList.remove('hidden');
+            validationWarnings.classList.add('hidden');
+        } else {
+            validationSuccess.classList.add('hidden');
+            validationWarnings.classList.remove('hidden');
+        }
+    }
+    
+    // Event listeners for meal selects
+    document.querySelectorAll('.meal-select').forEach(select => {
+        updateMealInfo(select);
+        select.addEventListener('change', function() {
+            updateMealInfo(this);
+            updatePlanSummary();
+        });
+    });
+    
+    // Price input listeners
+    weeklyPriceInput.addEventListener('input', function() {
+        updatePrices();
+        updateValidation();
+    });
+    
+    // Form validation listeners
+    document.getElementById('{{ form.name.id_for_label }}').addEventListener('input', updateValidation);
+    document.getElementById('{{ form.description.id_for_label }}').addEventListener('input', updateValidation);
+    
+    // Use suggested price button
+    document.getElementById('use-suggested-price').addEventListener('click', function() {
+        const suggestedPrice = currentWeeklyCost * 1.5; // 50% markup
+        weeklyPriceInput.value = suggestedPrice.toFixed(2);
+        updatePrices();
+        updateValidation();
+    });
+    
+    // Clear all meals
+    document.getElementById('clear-all').addEventListener('click', function() {
+        if (confirm('Czy na pewno chcesz wyczyścić wszystkie posiłki?')) {
+            document.querySelectorAll('.meal-select').forEach(select => {
+                select.value = '';
+                updateMealInfo(select);
+            });
+            updatePlanSummary();
+        }
+    });
+    
+    // Quick fill functions
+    function fillMealType(mealType) {
+        const availableDishes = [];
+        document.querySelectorAll(`.meal-select[data-meal="${mealType}"] option[value]`).forEach(option => {
+            if (option.value) availableDishes.push(option.value);
+        });
+        
+        if (availableDishes.length === 0) {
+            alert(`Brak dostępnych dań dla typu: ${mealType}`);
+            return;
+        }
+        
+        document.querySelectorAll(`.meal-select[data-meal="${mealType}"]`).forEach(select => {
+            const randomDish = availableDishes[Math.floor(Math.random() * availableDishes.length)];
+            select.value = randomDish;
+            updateMealInfo(select);
+        });
+        
+        updatePlanSummary();
+    }
+    
+    document.getElementById('fill-breakfasts').addEventListener('click', () => fillMealType('breakfast'));
+    document.getElementById('fill-lunches').addEventListener('click', () => fillMealType('lunch'));
+    document.getElementById('fill-dinners').addEventListener('click', () => fillMealType('dinner'));
+    
+    // Form validation on submit
+    document.getElementById('diet-plan-form').addEventListener('submit', function(e) {
+        const name = document.getElementById('{{ form.name.id_for_label }}').value.trim();
+        const description = document.getElementById('{{ form.description.id_for_label }}').value.trim();
+        const weeklyPrice = parseFloat(weeklyPriceInput.value) || 0;
+        const totalMeals = Array.from(document.querySelectorAll('.meal-select')).filter(s => s.value).length;
+        
+        if (!name) {
+            e.preventDefault();
+            alert('Wprowadź nazwę planu.');
+            document.getElementById('{{ form.name.id_for_label }}').focus();
+            return false;
+        }
+        
+        if (!description) {
+            e.preventDefault();
+            alert('Wprowadź opis planu.');
+            document.getElementById('{{ form.description.id_for_label }}').focus();
+            return false;
+        }
+        
+        if (weeklyPrice <= 0) {
+            e.preventDefault();
+            alert('Wprowadź prawidłową cenę tygodniową.');
+            weeklyPriceInput.focus();
+            return false;
+        }
+        
+        if (totalMeals === 0) {
+            e.preventDefault();
+            alert('Dodaj przynajmniej jeden posiłek do planu.');
+            return false;
+        }
+        
+        if (totalMeals < 21) {
+            if (!confirm(`Plan nie jest kompletny (${totalMeals}/21 posiłków). Czy na pewno chcesz zapisać?`)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        if (weeklyPrice < currentWeeklyCost) {
+            if (!confirm(`Cena sprzedaży (${weeklyPrice.toFixed(2)} zł) jest niższa od kosztów (${currentWeeklyCost.toFixed(2)} zł). Czy na pewno chcesz zapisać?`)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+    
+    // Initial calculations
+    updatePlanSummary();
+    updateValidation();
+    
+    // Focus on first field
+    document.getElementById('{{ form.name.id_for_label }}').focus();
+});
+</script>
+{% endblock content %}

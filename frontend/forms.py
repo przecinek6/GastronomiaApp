@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from datetime import date
-from frontend.models import Ingredient, Dish, DishIngredient
+from frontend.models import Ingredient, Dish, DietPlan
 
 User = get_user_model()
 
@@ -291,3 +291,50 @@ DishIngredientFormSet = forms.formset_factory(
     extra=1,
     can_delete=True
 )
+
+class DietPlanForm(forms.ModelForm):
+    class Meta:
+        model = DietPlan
+        fields = ['name', 'description', 'weekly_price', 'is_active']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Stylowanie pól formularza
+        self.fields['name'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Nazwa planu (np. Plan Keto, Plan Standard)'
+        })
+        
+        self.fields['description'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Opis planu dietetycznego, dla kogo jest przeznaczony, jakie ma korzyści...',
+            'rows': 5
+        })
+        
+        self.fields['weekly_price'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Cena za tydzień (np. 149.99)',
+            'step': '0.01',
+            'min': '0'
+        })
+        
+        self.fields['is_active'].widget.attrs.update({
+            'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
+        })
+        
+        # Polskie etykiety
+        self.fields['name'].label = 'Nazwa planu'
+        self.fields['description'].label = 'Opis planu'
+        self.fields['weekly_price'].label = 'Cena tygodniowa (zł)'
+        self.fields['is_active'].label = 'Plan aktywny'
+        
+        # Help texts
+        self.fields['weekly_price'].help_text = 'System automatycznie obliczy ceny miesięczne i roczne'
+        self.fields['is_active'].help_text = 'Nieaktywne plany nie są widoczne dla klientów'
+    
+    def clean_weekly_price(self):
+        weekly_price = self.cleaned_data.get('weekly_price')
+        if weekly_price and weekly_price <= 0:
+            raise ValidationError('Cena musi być większa od 0.')
+        return weekly_price

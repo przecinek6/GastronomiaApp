@@ -7,17 +7,18 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Dashboard zarządzania</h1>
-            <p class="text-gray-600">Witaj w panelu zarządzania GastronomiaApp</p>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Panel zarządzania</h1>
+            <p class="text-gray-600">Witaj {{ user.first_name|default:user.username }}! Zarządzaj swoją aplikacją cateringową.</p>
         </div>
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Składniki</p>
                         <p class="text-3xl font-bold text-gray-800">{{ total_ingredients }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Aktywne w bazie</p>
                     </div>
                     <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center">
                         <i data-lucide="package" class="w-6 h-6 text-white"></i>
@@ -25,11 +26,12 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Dania</p>
                         <p class="text-3xl font-bold text-gray-800">{{ total_dishes }}</p>
+                        <p class="text-xs text-gray-500 mt-1">W menu</p>
                     </div>
                     <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
                         <i data-lucide="chef-hat" class="w-6 h-6 text-white"></i>
@@ -37,11 +39,12 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Plany dietetyczne</p>
                         <p class="text-3xl font-bold text-gray-800">{{ total_plans }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Dostępne dla klientów</p>
                     </div>
                     <div class="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
                         <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
@@ -49,11 +52,12 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Aktywne subskrypcje</p>
+                        <p class="text-sm font-medium text-gray-600">Subskrypcje</p>
                         <p class="text-3xl font-bold text-gray-800">{{ active_subscriptions }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Aktywne zamówienia</p>
                     </div>
                     <div class="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl flex items-center justify-center">
                         <i data-lucide="users" class="w-6 h-6 text-white"></i>
@@ -63,85 +67,167 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Szybkie akcje</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Zarządzanie</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Ingredients -->
                 <a href="{% url 'ingredient_list' %}" 
-                   class="flex items-center p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all duration-200 group">
-                    <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <i data-lucide="package" class="w-5 h-5 text-white"></i>
+                   class="group flex items-center p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all duration-200 hover:shadow-lg">
+                    <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="package" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800">Zarządzaj składnikami</h3>
-                        <p class="text-sm text-gray-600">Dodaj, edytuj i usuwaj składniki</p>
+                        <h3 class="text-lg font-semibold text-gray-800">Składniki</h3>
+                        <p class="text-sm text-gray-600">Zarządzaj bazą składników</p>
                     </div>
                 </a>
 
+                <!-- Dishes -->
                 <a href="{% url 'dish_list' %}" 
-                    class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 group">
-                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <i data-lucide="chef-hat" class="w-5 h-5 text-white"></i>
+                    class="group flex items-center p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 hover:shadow-lg">
+                    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="chef-hat" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800">Zarządzaj daniami</h3>
-                        <p class="text-sm text-gray-600">Dodaj, edytuj i usuwaj dania</p>
+                        <h3 class="text-lg font-semibold text-gray-800">Dania</h3>
+                        <p class="text-sm text-gray-600">Twórz i edytuj dania</p>
                     </div>
                 </a>
 
-                <a href="#" 
-                   class="flex items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 group opacity-50 cursor-not-allowed">
-                    <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-4">
-                        <i data-lucide="calendar" class="w-5 h-5 text-white"></i>
+                <!-- Diet Plans -->
+                <a href="{% url 'diet_plan_list' %}" 
+                   class="group flex items-center p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 hover:shadow-lg">
+                    <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800">Plany dietetyczne</h3>
+                        <h3 class="text-lg font-semibold text-gray-800">Plany dietetyczne</h3>
+                        <p class="text-sm text-gray-600">Konfiguruj ofertę dla klientów</p>
+                    </div>
+                </a>
+
+                <!-- Shopping Lists -->
+                <a href="#" 
+                   class="group flex items-center p-6 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl opacity-50 cursor-not-allowed">
+                    <div class="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mr-4">
+                        <i data-lucide="shopping-cart" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Lista zakupów</h3>
                         <p class="text-sm text-gray-600">Wkrótce dostępne</p>
                     </div>
                 </a>
 
+                <!-- Reports -->
                 <a href="#" 
-                   class="flex items-center p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl hover:from-orange-100 hover:to-orange-200 transition-all duration-200 group opacity-50 cursor-not-allowed">
-                    <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                        <i data-lucide="shopping-cart" class="w-5 h-5 text-white"></i>
+                   class="group flex items-center p-6 bg-gradient-to-r from-pink-50 to-pink-100 rounded-xl opacity-50 cursor-not-allowed">
+                    <div class="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center mr-4">
+                        <i data-lucide="bar-chart" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800">Lista zakupów</h3>
+                        <h3 class="text-lg font-semibold text-gray-800">Raporty</h3>
                         <p class="text-sm text-gray-600">Wkrótce dostępne</p>
                     </div>
                 </a>
 
-                <a href="#" 
-                   class="flex items-center p-4 bg-gradient-to-r from-pink-50 to-pink-100 rounded-xl hover:from-pink-100 hover:to-pink-200 transition-all duration-200 group opacity-50 cursor-not-allowed">
-                    <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center mr-4">
-                        <i data-lucide="bar-chart" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Raporty</h3>
-                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
-                    </div>
-                </a>
-
+                <!-- Admin Panel -->
                 <a href="/admin/" 
-                   class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:from-gray-100 hover:to-gray-200 transition-all duration-200 group">
-                    <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <i data-lucide="settings" class="w-5 h-5 text-white"></i>
+                   class="group flex items-center p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:from-gray-100 hover:to-gray-200 transition-all duration-200 hover:shadow-lg">
+                    <div class="w-12 h-12 bg-gray-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="settings" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800">Panel administracyjny</h3>
-                        <p class="text-sm text-gray-600">Zaawansowane zarządzanie</p>
+                        <h3 class="text-lg font-semibold text-gray-800">Panel administracyjny</h3>
+                        <p class="text-sm text-gray-600">Zaawansowane ustawienia</p>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- Recent Activity (placeholder) -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Ostatnia aktywność</h2>
-            <div class="text-center py-8">
-                <i data-lucide="activity" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
-                <p class="text-gray-600">Brak ostatniej aktywności do wyświetlenia</p>
+        <!-- Quick Start or Important Notice -->
+        {% if total_ingredients == 0 or total_dishes == 0 or total_plans == 0 %}
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i data-lucide="rocket" class="w-6 h-6 mr-3"></i>
+                    Rozpocznij konfigurację systemu
+                </h2>
+                <p class="text-lg mb-6 opacity-90">
+                    Aby rozpocząć sprzedaż, uzupełnij brakujące elementy swojej oferty:
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {% if total_ingredients == 0 %}
+                        <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-white font-bold">1</span>
+                                </div>
+                                <h3 class="font-semibold">Dodaj składniki</h3>
+                            </div>
+                            <p class="text-sm opacity-75 mb-3">Stwórz bazę składników z cenami</p>
+                            <a href="{% url 'ingredient_add' %}" 
+                               class="inline-flex items-center text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                                Dodaj składnik
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    {% if total_dishes == 0 %}
+                        <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-white font-bold">2</span>
+                                </div>
+                                <h3 class="font-semibold">Stwórz dania</h3>
+                            </div>
+                            <p class="text-sm opacity-75 mb-3">Komponuj dania ze składników</p>
+                            {% if total_ingredients > 0 %}
+                                <a href="{% url 'dish_add' %}" 
+                                   class="inline-flex items-center text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg transition-colors">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                                    Dodaj danie
+                                </a>
+                            {% else %}
+                                <span class="text-sm opacity-50">Najpierw dodaj składniki</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if total_plans == 0 %}
+                        <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-white font-bold">3</span>
+                                </div>
+                                <h3 class="font-semibold">Utwórz plany</h3>
+                            </div>
+                            <p class="text-sm opacity-75 mb-3">Skonfiguruj ofertę dietetyczną</p>
+                            {% if total_dishes > 0 %}
+                                <a href="{% url 'diet_plan_add' %}" 
+                                   class="inline-flex items-center text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg transition-colors">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                                    Dodaj plan
+                                </a>
+                            {% else %}
+                                <span class="text-sm opacity-50">Najpierw stwórz dania</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+        {% else %}
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-8 text-white">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i data-lucide="check-circle" class="w-6 h-6 mr-3"></i>
+                    System gotowy do działania!
+                </h2>
+                <p class="text-lg opacity-90">
+                    Twoja oferta dietetyczna jest kompletna. Możesz rozpocząć przyjmowanie zamówień od klientów.
+                </p>
+            </div>
+        {% endif %}
     </div>
 </section>
 
@@ -149,6 +235,30 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Lucide icons
     lucide.createIcons();
+    
+    // Add smooth animations to cards
+    const cards = document.querySelectorAll('.hover\\:shadow-xl');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate-fade-in');
+    });
 });
 </script>
+
+<style>
+@keyframes fade-in {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+}
+</style>
 {% endblock content %}

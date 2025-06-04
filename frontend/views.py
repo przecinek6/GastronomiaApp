@@ -7,8 +7,8 @@ from django.db.models import Q
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from frontend.models import UserProfile, Ingredient, Dish, DishIngredient
-from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet
+from frontend.models import UserProfile, Ingredient, Dish, DishIngredient, DietPlan, MealPlan
+from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet, DietPlanForm
 import traceback
 
 User = get_user_model()
@@ -102,8 +102,8 @@ def manage_dashboard(request):
     context = {
         'total_ingredients': Ingredient.objects.filter(is_deleted=False).count(),
         'total_dishes': Dish.objects.filter(is_deleted=False).count(),
-        'total_plans': 0,   # Dodamy później
-        'active_subscriptions': 0,  # Dodamy później
+        'total_plans': DietPlan.objects.filter(is_active=True).count(),
+        'active_subscriptions': 0,  # Dodamy później kiedy będą subskrypcje
     }
     
     return render(request, 'management/dashboard.html', context)
@@ -421,6 +421,258 @@ def dish_delete(request, pk):
     return render(request, 'management/dishes/confirm_delete.html', {
         'dish': dish
     })
+
+# ==========================================
+# ZARZĄDZANIE PLANAMI DIETETYCZNYMI
+# ==========================================
+
+@login_required
+def diet_plan_list(request):
+    """Lista planów dietetycznych z paginacją i wyszukiwaniem"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Parametry z GET
+    search = request.GET.get('search', '')
+    per_page = request.GET.get('per_page', '25')
+    show_inactive = request.GET.get('show_inactive', False)
+    
+    # Walidacja per_page
+    if per_page not in ['10', '25', '50']:
+        per_page = '25'
+    
+    # Bazowe query
+    diet_plans = DietPlan.objects.all()
+    
+    # Filtrowanie nieaktywnych
+    if not show_inactive:
+        diet_plans = diet_plans.filter(is_active=True)
+    
+    # Wyszukiwanie
+    if search:
+        diet_plans = diet_plans.filter(
+            Q(name__icontains=search) | Q(description__icontains=search)
+        )
+    
+    # Sortowanie
+    diet_plans = diet_plans.order_by('name')
+    
+    # Paginacja
+    paginator = Paginator(diet_plans, int(per_page))
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search': search,
+        'per_page': per_page,
+        'show_inactive': show_inactive,
+        'total_count': diet_plans.count(),
+    }
+    
+    return render(request, 'management/diet_plans/list.html', context)
+
+@login_required
+def diet_plan_add(request):
+    """Dodawanie nowego planu dietetycznego - wszystko na jednej stronie"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Pobierz wszystkie dania aktywne
+    dishes = Dish.objects.filter(is_deleted=False).order_by('meal_type', 'name')
+    
+    # Przygotuj strukturę danych dla siatki
+    days = [
+        (1, 'Poniedziałek'), (2, 'Wtorek'), (3, 'Środa'), (4, 'Czwartek'),
+        (5, 'Piątek'), (6, 'Sobota'), (7, 'Niedziela')
+    ]
+    
+    meal_types = [
+        ('breakfast', 'Śniadanie'),
+        ('lunch', 'Obiad'),
+        ('dinner', 'Kolacja')
+    ]
+    
+    if request.method == 'POST':
+        form = DietPlanForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Zapisz plan dietetyczny
+                    diet_plan = form.save()
+                    
+                    # Zapisz meal_plans
+                    meals_added = 0
+                    for day_num, day_name in days:
+                        for meal_type, meal_name in meal_types:
+                            dish_id = request.POST.get(f'meal_{day_num}_{meal_type}')
+                            if dish_id:
+                                try:
+                                    dish = Dish.objects.get(id=dish_id, is_deleted=False)
+                                    MealPlan.objects.create(
+                                        diet_plan=diet_plan,
+                                        day_of_week=day_num,
+                                        meal_type=meal_type,
+                                        dish=dish
+                                    )
+                                    meals_added += 1
+                                except Dish.DoesNotExist:
+                                    continue
+                    
+                    messages.success(request, f'Plan "{diet_plan.name}" został utworzony z {meals_added} posiłkami.')
+                    return redirect('diet_plan_list')
+                    
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas zapisywania: {str(e)}')
+    else:
+        form = DietPlanForm()
+    
+    # Przygotuj dane dla szablonu
+    grid_data = []
+    for day_num, day_name in days:
+        day_meals = {meal_type: None for meal_type, _ in meal_types}
+        grid_data.append({
+            'day_num': day_num,
+            'day_name': day_name,
+            'meals': day_meals
+        })
+    
+    context = {
+        'form': form,
+        'grid_data': grid_data,
+        'meal_types': meal_types,
+        'dishes': dishes,
+        'days': days,
+        'title': 'Dodaj plan dietetyczny',
+        'submit_text': 'Stwórz plan dietetyczny'
+    }
+    
+    return render(request, 'management/diet_plans/form.html', context)
+
+@login_required
+def diet_plan_edit(request, pk):
+    """Edycja planu dietetycznego - wszystko na jednej stronie"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    diet_plan = get_object_or_404(DietPlan, pk=pk)
+    
+    # Pobierz wszystkie dania aktywne
+    dishes = Dish.objects.filter(is_deleted=False).order_by('meal_type', 'name')
+    
+    # Pobierz istniejące meal_plans dla tego planu
+    existing_meals = {}
+    for meal_plan in MealPlan.objects.filter(diet_plan=diet_plan):
+        key = f"{meal_plan.day_of_week}_{meal_plan.meal_type}"
+        existing_meals[key] = meal_plan
+    
+    # Przygotuj strukturę danych dla siatki
+    days = [
+        (1, 'Poniedziałek'), (2, 'Wtorek'), (3, 'Środa'), (4, 'Czwartek'),
+        (5, 'Piątek'), (6, 'Sobota'), (7, 'Niedziela')
+    ]
+    
+    meal_types = [
+        ('breakfast', 'Śniadanie'),
+        ('lunch', 'Obiad'),
+        ('dinner', 'Kolacja')
+    ]
+    
+    if request.method == 'POST':
+        form = DietPlanForm(request.POST, instance=diet_plan)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Zapisz plan dietetyczny
+                    diet_plan = form.save()
+                    
+                    # Usuń wszystkie istniejące meal_plans dla tego planu
+                    MealPlan.objects.filter(diet_plan=diet_plan).delete()
+                    
+                    # Zapisz nowe meal_plans
+                    meals_added = 0
+                    for day_num, day_name in days:
+                        for meal_type, meal_name in meal_types:
+                            dish_id = request.POST.get(f'meal_{day_num}_{meal_type}')
+                            if dish_id:
+                                try:
+                                    dish = Dish.objects.get(id=dish_id, is_deleted=False)
+                                    MealPlan.objects.create(
+                                        diet_plan=diet_plan,
+                                        day_of_week=day_num,
+                                        meal_type=meal_type,
+                                        dish=dish
+                                    )
+                                    meals_added += 1
+                                except Dish.DoesNotExist:
+                                    continue
+                    
+                    messages.success(request, f'Plan "{diet_plan.name}" został zaktualizowany z {meals_added} posiłkami.')
+                    return redirect('diet_plan_list')
+                    
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas zapisywania: {str(e)}')
+    else:
+        form = DietPlanForm(instance=diet_plan)
+    
+    # Przygotuj dane dla szablonu
+    grid_data = []
+    for day_num, day_name in days:
+        day_meals = {}
+        for meal_type, meal_name in meal_types:
+            key = f"{day_num}_{meal_type}"
+            day_meals[meal_type] = existing_meals.get(key)
+        grid_data.append({
+            'day_num': day_num,
+            'day_name': day_name,
+            'meals': day_meals
+        })
+    
+    context = {
+        'form': form,
+        'diet_plan': diet_plan,
+        'grid_data': grid_data,
+        'meal_types': meal_types,
+        'dishes': dishes,
+        'days': days,
+        'title': f'Edytuj plan: {diet_plan.name}',
+        'submit_text': 'Zaktualizuj plan dietetyczny'
+    }
+    
+    return render(request, 'management/diet_plans/form.html', context)
+
+@login_required
+def diet_plan_delete(request, pk):
+    """Deaktywacja planu dietetycznego"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    diet_plan = get_object_or_404(DietPlan, pk=pk)
+    
+    if request.method == 'POST':
+        if diet_plan.is_active:
+            # Deaktywuj plan
+            diet_plan.is_active = False
+            diet_plan.save()
+            messages.success(request, f'Plan "{diet_plan.name}" został deaktywowany.')
+        else:
+            # Aktywuj plan
+            diet_plan.is_active = True
+            diet_plan.save()
+            messages.success(request, f'Plan "{diet_plan.name}" został aktywowany.')
+        
+        return redirect('diet_plan_list')
+    
+    return render(request, 'management/diet_plans/confirm_delete.html', {
+        'diet_plan': diet_plan
+    })
+
+
+
 
 # ==========================================
 # API ENDPOINTY

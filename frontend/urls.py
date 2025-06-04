@@ -23,6 +23,12 @@ urlpatterns = [
     path('manage/dishes/<int:pk>/edit/', views.dish_edit, name='dish_edit'),
     path('manage/dishes/<int:pk>/delete/', views.dish_delete, name='dish_delete'),
     
+    # Zarządzanie planami dietetycznymi  
+    path('manage/diet-plans/', views.diet_plan_list, name='diet_plan_list'),
+    path('manage/diet-plans/add/', views.diet_plan_add, name='diet_plan_add'),
+    path('manage/diet-plans/<int:pk>/edit/', views.diet_plan_edit, name='diet_plan_edit'),
+    path('manage/diet-plans/<int:pk>/delete/', views.diet_plan_delete, name='diet_plan_delete'),
+
     # API endpointy
     path('api/ingredient/<int:ingredient_id>/', views.ingredient_data_api, name='ingredient_data_api'),
     path('api/ingredients/', views.ingredients_list_api, name='ingredients_list_api'),

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}{% if diet_plan.is_active %}Deaktywuj plan{% else %}Aktywuj plan{% endif %}{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <div class="w-16 h-16 {% if diet_plan.is_active %}bg-red-500{% else %}bg-green-500{% endif %} rounded-full flex items-center justify-center mx-auto mb-4">
+                {% if diet_plan.is_active %}
+                    <i data-lucide="pause" class="w-8 h-8 text-white"></i>
+                {% else %}
+                    <i data-lucide="play" class="w-8 h-8 text-white"></i>
+                {% endif %}
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                {% if diet_plan.is_active %}
+                    Deaktywuj plan
+                {% else %}
+                    Aktywuj plan
+                {% endif %}
+            </h1>
+            <p class="text-gray-600">
+                {% if diet_plan.is_active %}
+                    Czy na pewno chcesz deaktywować ten plan dietetyczny?
+                {% else %}
+                    Czy na pewno chcesz aktywować ten plan dietetyczny?
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Plan Details Card -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Szczegóły planu</h2>
+                
+                <div class="space-y-6">
+                    <!-- Basic Info -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Podstawowe informacje</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-sm text-gray-600">Nazwa:</span>
+                                <span class="font-semibold text-gray-800 ml-2">{{ diet_plan.name }}</span>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-600">Status:</span>
+                                {% if diet_plan.is_active %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 ml-2">
+                                        <i data-lucide="check" class="w-3 h-3 mr-1"></i>
+                                        Aktywny
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">
+                                        <i data-lucide="pause" class="w-3 h-3 mr-1"></i>
+                                        Nieaktywny
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-600">Utworzono:</span>
+                                <span class="text-gray-800 ml-2">{{ diet_plan.created_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Opis</h3>
+                        <p class="text-gray-700">{{ diet_plan.description }}</p>
+                    </div>
+                    
+                    <!-- Pricing -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Cennik</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center bg-gray-50 rounded-lg p-3">
+                                <div class="text-lg font-bold text-green-600">{{ diet_plan.weekly_price }}zł</div>
+                                <div class="text-xs text-gray-500">Tydzień</div>
+                            </div>
+                            <div class="text-center bg-gray-50 rounded-lg p-3">
+                                <div class="text-lg font-bold text-blue-600">{{ diet_plan.monthly_price }}zł</div>
+                                <div class="text-xs text-gray-500">Miesiąc</div>
+                            </div>
+                            <div class="text-center bg-gray-50 rounded-lg p-3">
+                                <div class="text-lg font-bold text-purple-600">{{ diet_plan.yearly_price }}zł</div>
+                                <div class="text-xs text-gray-500">Rok</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning/Info Box -->
+        <div class="{% if diet_plan.is_active %}bg-red-50 border-red-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-xl p-4 mb-8">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    {% if diet_plan.is_active %}
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600 mt-0.5"></i>
+                    {% else %}
+                        <i data-lucide="info" class="w-5 h-5 text-green-600 mt-0.5"></i>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-semibold {% if diet_plan.is_active %}text-red-800{% else %}text-green-800{% endif %}">
+                        {% if diet_plan.is_active %}
+                            Ostrzeżenie o deaktywacji
+                        {% else %}
+                            Informacja o aktywacji
+                        {% endif %}
+                    </h3>
+                    <p class="text-sm {% if diet_plan.is_active %}text-red-700{% else %}text-green-700{% endif %} mt-1">
+                        {% if diet_plan.is_active %}
+                            Deaktywacja planu spowoduje, że nie będzie on widoczny dla klientów w ofercie. Istniejące subskrypcje pozostaną bez zmian, ale nowi klienci nie będą mogli wybrać tego planu.
+                        {% else %}
+                            Aktywacja planu sprawi, że będzie on ponownie dostępny dla klientów w ofercie. Upewnij się, że plan ma skonfigurowane wszystkie posiłki.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'diet_plan_list' %}" 
+               class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                Anuluj i wróć
+            </a>
+            
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="px-6 py-3 {% if diet_plan.is_active %}bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700{% else %}bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700{% endif %} text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl">
+                    {% if diet_plan.is_active %}
+                        <i data-lucide="pause" class="w-4 h-4 inline mr-2"></i>
+                        Tak, deaktywuj plan
+                    {% else %}
+                        <i data-lucide="play" class="w-4 h-4 inline mr-2"></i>
+                        Tak, aktywuj plan
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Additional Actions -->
+        <div class="mt-8 text-center">
+            <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                <a href="{% url 'diet_plan_configure' diet_plan.pk %}" 
+                   class="text-blue-600 hover:text-blue-700 transition-colors">
+                    <i data-lucide="grid-3x3" class="w-4 h-4 inline mr-1"></i>
+                    Konfiguruj posiłki
+                </a>
+                <span class="hidden sm:inline text-gray-400">•</span>
+                <a href="{% url 'diet_plan_edit' diet_plan.pk %}" 
+                   class="text-blue-600 hover:text-blue-700 transition-colors">
+                    <i data-lucide="edit" class="w-4 h-4 inline mr-1"></i>
+                    Edytuj plan
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}
