@@ -138,6 +138,16 @@ class Dish(models.Model):
             total += fat
         return total
     
+    def get_allergens_list(self):
+        """Zwraca listę alergenów jako listę stringów"""
+        if self.allergens:
+            return [allergen.strip() for allergen in self.allergens.split(',') if allergen.strip()]
+        return []
+    
+    def get_ingredient_count(self):
+        """Zwraca liczbę składników w daniu"""
+        return self.dishingredient_set.count()
+    
     def delete(self, *args, **kwargs):
         """Soft delete"""
         self.is_deleted = True
