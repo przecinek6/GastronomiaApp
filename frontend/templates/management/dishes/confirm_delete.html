@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load dish_filters %}
+
+{% block title %}{% if dish.is_deleted %}Przywróć danie{% else %}Usuń danie{% endif %}{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <div class="w-16 h-16 {% if dish.is_deleted %}bg-green-500{% else %}bg-red-500{% endif %} rounded-full flex items-center justify-center mx-auto mb-4">
+                {% if dish.is_deleted %}
+                    <i data-lucide="undo" class="w-8 h-8 text-white"></i>
+                {% else %}
+                    <i data-lucide="trash-2" class="w-8 h-8 text-white"></i>
+                {% endif %}
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                {% if dish.is_deleted %}
+                    Przywróć danie
+                {% else %}
+                    Usuń danie
+                {% endif %}
+            </h1>
+            <p class="text-gray-600">
+                {% if dish.is_deleted %}
+                    Czy na pewno chcesz przywrócić to danie?
+                {% else %}
+                    Czy na pewno chcesz usunąć to danie?
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Dish Details Card -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">Szczegóły dania</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Basic Info -->
+                    <div class="lg:col-span-2">
+                        <div class="flex items-start space-x-4 mb-6">
+                            {% if dish.image %}
+                                <img src="{{ dish.image.url }}" alt="{{ dish.name }}" class="w-24 h-24 rounded-lg object-cover">
+                            {% else %}
+                                <div class="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="image" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ dish.name }}</h3>
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="text-sm text-gray-600">Typ posiłku:</span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2
+                                                   {% if dish.meal_type == 'breakfast' %}bg-yellow-100 text-yellow-800
+                                                   {% elif dish.meal_type == 'lunch' %}bg-orange-100 text-orange-800
+                                                   {% elif dish.meal_type == 'dinner' %}bg-purple-100 text-purple-800
+                                                   {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ dish.get_meal_type_display }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-600">Status:</span>
+                                        {% if dish.is_deleted %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2">
+                                                <i data-lucide="x" class="w-3 h-3 mr-1"></i>
+                                                Usunięty
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 ml-2">
+                                                <i data-lucide="check" class="w-3 h-3 mr-1"></i>
+                                                Aktywny
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-600">Dodano:</span>
+                                        <span class="text-gray-800 ml-2">{{ dish.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if dish.description %}
+                            <div class="mb-6">
+                                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Opis</h4>
+                                <p class="text-gray-700">{{ dish.description }}</p>
+                            </div>
+                        {% endif %}
+
+                        {% if dish.allergens %}
+                            <div class="mb-6">
+                                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Alergeny</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    {% for allergen in dish.allergens|split:"," %}
+                                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">{{ allergen|trim }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Nutritional Summary -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Wartości odżywcze i koszt</h4>
+                        <div class="space-y-4">
+                            <div class="bg-blue-50 rounded-lg p-3 text-center">
+                                <div class="text-2xl font-bold text-blue-800">{{ dish.total_calories|floatformat:0 }}</div>
+                                <div class="text-xs text-blue-600">Kalorie (kcal)</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-green-50 rounded-lg p-2 text-center">
+                                    <div class="text-sm font-semibold text-green-800">{{ dish.total_protein|floatformat:1 }}g</div>
+                                    <div class="text-xs text-green-600">Białko</div>
+                                </div>
+                                <div class="bg-yellow-50 rounded-lg p-2 text-center">
+                                    <div class="text-sm font-semibold text-yellow-800">{{ dish.total_fat|floatformat:1 }}g</div>
+                                    <div class="text-xs text-yellow-600">Tłuszcze</div>
+                                </div>
+                            </div>
+                            <div class="bg-purple-50 rounded-lg p-3 text-center">
+                                <div class="text-lg font-bold text-purple-800">{{ dish.total_cost|floatformat:2 }} zł</div>
+                                <div class="text-xs text-purple-600">Koszt całkowity</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ingredients List -->
+                {% if dish.dishingredient_set.exists %}
+                    <div class="mt-8">
+                        <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                            Składniki ({{ dish.dishingredient_set.count }})
+                        </h4>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {% for dish_ingredient in dish.dishingredient_set.all %}
+                                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
+                                        <span class="font-medium text-gray-800">{{ dish_ingredient.ingredient.name }}</span>
+                                        <span class="text-sm text-gray-600">{{ dish_ingredient.quantity_grams }}g</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Warning/Info Box -->
+        <div class="{% if dish.is_deleted %}bg-green-50 border-green-200{% else %}bg-red-50 border-red-200{% endif %} border rounded-xl p-4 mb-8">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    {% if dish.is_deleted %}
+                        <i data-lucide="info" class="w-5 h-5 text-green-600 mt-0.5"></i>
+                    {% else %}
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600 mt-0.5"></i>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-semibold {% if dish.is_deleted %}text-green-800{% else %}text-red-800{% endif %}">
+                        {% if dish.is_deleted %}
+                            Informacja o przywróceniu
+                        {% else %}
+                            Ostrzeżenie o usunięciu
+                        {% endif %}
+                    </h3>
+                    <p class="text-sm {% if dish.is_deleted %}text-green-700{% else %}text-red-700{% endif %} mt-1">
+                        {% if dish.is_deleted %}
+                            Po przywróceniu danie ponownie będzie dostępne do użycia w planach dietetycznych i będzie widoczne na listach.
+                        {% else %}
+                            Usunięcie dania spowoduje oznaczenie go jako nieaktywne. Nie będzie można używać go w nowych planach dietetycznych, ale istniejące plany pozostaną bez zmian.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'dish_list' %}" 
+               class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                Anuluj i wróć
+            </a>
+            
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="px-6 py-3 {% if dish.is_deleted %}bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700{% else %}bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700{% endif %} text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl">
+                    {% if dish.is_deleted %}
+                        <i data-lucide="undo" class="w-4 h-4 inline mr-2"></i>
+                        Tak, przywróć danie
+                    {% else %}
+                        <i data-lucide="trash-2" class="w-4 h-4 inline mr-2"></i>
+                        Tak, usuń danie
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Additional Info -->
+        {% if not dish.is_deleted %}
+            <div class="mt-8 text-center">
+                <p class="text-sm text-gray-500">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                    To jest "miękkie" usunięcie - danie będzie ukryte, ale nie zostanie trwale usunięte z bazy danych.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}

@@ -1,0 +1,463 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ title }}</h1>
+            <p class="text-gray-600">
+                {% if dish %}
+                    Edytuj informacje o daniu i jego składnikach
+                {% else %}
+                    Dodaj nowe danie do bazy danych
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %} border rounded-lg p-4 mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Form -->
+        <form method="post" enctype="multipart/form-data" id="dish-form">
+            {% csrf_token %}
+            
+            <div class="space-y-8">
+                <!-- Basic Info Section -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+                            <i data-lucide="info" class="w-5 h-5 mr-2 text-green-600"></i>
+                            Podstawowe informacje
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Name -->
+                            <div>
+                                <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.name.label }} *
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Meal Type -->
+                            <div>
+                                <label for="{{ form.meal_type.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.meal_type.label }} *
+                                </label>
+                                {{ form.meal_type }}
+                                {% if form.meal_type.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.meal_type.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.description.label }}
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.description.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Allergens -->
+                            <div>
+                                <label for="{{ form.allergens.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.allergens.label }}
+                                </label>
+                                {{ form.allergens }}
+                                {% if form.allergens.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.allergens.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <p class="text-gray-500 text-sm mt-1">Przykład: gluten, laktoza, jaja, orzechy</p>
+                            </div>
+                        </div>
+
+                        {% if dish %}
+                            <!-- Image (only for editing existing dishes) -->
+                            <div class="mt-6">
+                                <label for="{{ form.image.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    {{ form.image.label }}
+                                </label>
+                                {{ form.image }}
+                                {% if form.image.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {{ form.image.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                {% if dish.image %}
+                                    <div class="mt-3">
+                                        <p class="text-sm text-gray-600 mb-2">Obecne zdjęcie:</p>
+                                        <img src="{{ dish.image.url }}" alt="{{ dish.name }}" class="w-32 h-32 object-cover rounded-lg">
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Ingredients Section -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                <i data-lucide="package" class="w-5 h-5 mr-2 text-blue-600"></i>
+                                Składniki dania
+                            </h3>
+                            <button type="button" id="add-ingredient" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i>
+                                Dodaj składnik
+                            </button>
+                        </div>
+
+                        <div id="ingredient-forms" class="space-y-4">
+                            {{ ingredient_formset.management_form }}
+                            {% for form in ingredient_formset %}
+                                <div class="ingredient-form-row bg-gray-50 rounded-lg p-4" data-form-index="{{ forloop.counter0 }}">
+                                    <input type="hidden" name="ingredients-{{ forloop.counter0 }}-DELETE" value="">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Składnik *</label>
+                                            {{ form.ingredient }}
+                                            {% if form.ingredient.errors %}
+                                                <div class="text-red-500 text-sm mt-1">{{ form.ingredient.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Ilość (g) *</label>
+                                            {{ form.quantity_grams }}
+                                            {% if form.quantity_grams.errors %}
+                                                <div class="text-red-500 text-sm mt-1">{{ form.quantity_grams.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex items-start">
+                                            <button type="button" class="remove-ingredient bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors mt-6">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Ingredient Info -->
+                                    <div class="ingredient-info mt-3 text-sm text-gray-600 grid grid-cols-3 gap-4">
+                                        <div>Kalorie: <span class="calories font-medium">-</span></div>
+                                        <div>Białko: <span class="protein font-medium">-</span>g</div>
+                                        <div>Koszt: <span class="cost font-medium">-</span>zł</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div id="empty-form" class="hidden">
+                            <div class="ingredient-form-row bg-gray-50 rounded-lg p-4" data-form-index="__prefix__">
+                                <input type="hidden" name="ingredients-__prefix__-DELETE" value="">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Składnik *</label>
+                                        {{ ingredient_formset.empty_form.ingredient }}
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Ilość (g) *</label>
+                                        {{ ingredient_formset.empty_form.quantity_grams }}
+                                    </div>
+                                    <div class="flex items-start">
+                                        <button type="button" class="remove-ingredient bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors mt-6">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Ingredient Info -->
+                                <div class="ingredient-info mt-3 text-sm text-gray-600 grid grid-cols-3 gap-4">
+                                    <div>Kalorie: <span class="calories font-medium">-</span></div>
+                                    <div>Białko: <span class="protein font-medium">-</span>g</div>
+                                    <div>Koszt: <span class="cost font-medium">-</span>zł</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if ingredient_formset.non_form_errors %}
+                            <div class="text-red-500 text-sm mt-4">
+                                {{ ingredient_formset.non_form_errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+                            <i data-lucide="calculator" class="w-5 h-5 mr-2 text-purple-600"></i>
+                            Podsumowanie dania
+                        </h3>
+
+                        <div id="dish-summary" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                            <div class="bg-blue-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-blue-800" id="total-calories">0</div>
+                                <div class="text-sm text-blue-600">Kalorie (kcal)</div>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-green-800" id="total-protein">0g</div>
+                                <div class="text-sm text-green-600">Białko</div>
+                            </div>
+                            <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-yellow-800" id="total-fat">0g</div>
+                                <div class="text-sm text-yellow-600">Tłuszcze</div>
+                            </div>
+                            <div class="bg-purple-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-purple-800" id="total-cost">0.00 zł</div>
+                                <div class="text-sm text-purple-600">Koszt</div>
+                            </div>
+                        </div>
+
+                        <!-- Form Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-4 justify-end">
+                            <a href="{% url 'dish_list' %}" 
+                               class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                                <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
+                                Anuluj
+                            </a>
+                            <button type="submit" 
+                                    class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
+                                {{ submit_text }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-sm mt-4">
+                    {{ form.non_field_errors.0 }}
+                </div>
+            {% endif %}
+        </form>
+
+        <!-- Help Section -->
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                <i data-lucide="help-circle" class="w-5 h-5 mr-2"></i>
+                Wskazówki
+            </h3>
+            <ul class="space-y-2 text-blue-700">
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>Dodaj przynajmniej jeden składnik do dania</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>Ilości składników podawaj w gramach</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>System automatycznie obliczy wartości odżywcze i koszt</span>
+                </li>
+                <li class="flex items-start">
+                    <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5 text-blue-600"></i>
+                    <span>Pole "Alergeny" może zawierać więcej niż jeden alergen oddzielonych przecinkami</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Back Link -->
+        <div class="mt-8">
+            <a href="{% url 'dish_list' %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do listy dań
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    let formCount = parseInt(document.querySelector('#id_ingredients-TOTAL_FORMS').value);
+    
+    // Ingredient data cache for calculations
+    let ingredientData = {};
+    
+    // Load all ingredients data on page load
+    fetch('/api/ingredients/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.ingredients) {
+                data.ingredients.forEach(ingredient => {
+                    ingredientData[ingredient.id] = ingredient;
+                });
+                updateSummary(); // Update summary after loading data
+            }
+        })
+        .catch(error => {
+            console.error('Error loading ingredients:', error);
+        });
+    
+    // Add ingredient form
+    document.getElementById('add-ingredient').addEventListener('click', function() {
+        const emptyForm = document.getElementById('empty-form');
+        const newForm = emptyForm.innerHTML.replace(/__prefix__/g, formCount);
+        
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = newForm;
+        
+        document.getElementById('ingredient-forms').appendChild(wrapper.firstElementChild);
+        
+        formCount++;
+        document.querySelector('#id_ingredients-TOTAL_FORMS').value = formCount;
+        
+        // Reinitialize icons and event listeners
+        lucide.createIcons();
+        attachIngredientEvents();
+        updateSummary();
+    });
+    
+    // Remove ingredient form
+    function attachIngredientEvents() {
+        document.querySelectorAll('.remove-ingredient').forEach(button => {
+            button.removeEventListener('click', removeIngredientHandler);
+            button.addEventListener('click', removeIngredientHandler);
+        });
+        
+        // Update calculations when ingredient or quantity changes
+        document.querySelectorAll('.ingredient-select, .quantity-input').forEach(input => {
+            input.removeEventListener('change', updateIngredientRow);
+            input.removeEventListener('input', updateIngredientRow);
+            input.addEventListener('change', updateIngredientRow);
+            input.addEventListener('input', updateIngredientRow);
+        });
+    }
+    
+    function removeIngredientHandler(event) {
+        const row = event.target.closest('.ingredient-form-row');
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+            deleteInput.value = 'on';
+            row.style.display = 'none';
+        } else {
+            row.remove();
+        }
+        updateSummary();
+    }
+    
+    function updateIngredientRow(event) {
+        const row = event.target.closest('.ingredient-form-row');
+        const ingredientSelect = row.querySelector('.ingredient-select');
+        const quantityInput = row.querySelector('.quantity-input');
+        const infoDiv = row.querySelector('.ingredient-info');
+        
+        if (ingredientSelect.value && quantityInput.value && ingredientData[ingredientSelect.value]) {
+            const ingredient = ingredientData[ingredientSelect.value];
+            const quantity = parseFloat(quantityInput.value) || 0;
+            
+            const calories = (ingredient.calories_per_100g * quantity / 100).toFixed(0);
+            const protein = (ingredient.protein_per_100g * quantity / 100).toFixed(1);
+            const cost = (ingredient.price_per_100g * quantity / 100).toFixed(2);
+            
+            infoDiv.querySelector('.calories').textContent = calories;
+            infoDiv.querySelector('.protein').textContent = protein;
+            infoDiv.querySelector('.cost').textContent = cost;
+        } else {
+            infoDiv.querySelector('.calories').textContent = '-';
+            infoDiv.querySelector('.protein').textContent = '-';
+            infoDiv.querySelector('.cost').textContent = '-';
+        }
+        
+        updateSummary();
+    }
+    
+    function updateSummary() {
+        let totalCalories = 0;
+        let totalProtein = 0;
+        let totalFat = 0;
+        let totalCost = 0;
+        let ingredientCount = 0;
+        
+        document.querySelectorAll('.ingredient-form-row').forEach(row => {
+            if (row.style.display !== 'none' && !row.querySelector('input[name$="-DELETE"]')?.value) {
+                const quantityInput = row.querySelector('.quantity-input');
+                const ingredientSelect = row.querySelector('.ingredient-select');
+                
+                if (ingredientSelect.value && quantityInput.value && ingredientData[ingredientSelect.value]) {
+                    const ingredient = ingredientData[ingredientSelect.value];
+                    const quantity = parseFloat(quantityInput.value) || 0;
+                    
+                    totalCalories += (ingredient.calories_per_100g * quantity / 100);
+                    totalProtein += (ingredient.protein_per_100g * quantity / 100);
+                    totalFat += (ingredient.fat_per_100g * quantity / 100);
+                    totalCost += (ingredient.price_per_100g * quantity / 100);
+                    ingredientCount++;
+                }
+            }
+        });
+        
+        // Update summary elements if they exist
+        const caloriesEl = document.getElementById('total-calories');
+        const proteinEl = document.getElementById('total-protein');
+        const fatEl = document.getElementById('total-fat');
+        const costEl = document.getElementById('total-cost');
+        
+        if (caloriesEl) caloriesEl.textContent = Math.round(totalCalories);
+        if (proteinEl) proteinEl.textContent = totalProtein.toFixed(1) + 'g';
+        if (fatEl) fatEl.textContent = totalFat.toFixed(1) + 'g';
+        if (costEl) costEl.textContent = totalCost.toFixed(2) + ' zł';
+    }
+    
+    // Initialize events
+    attachIngredientEvents();
+    
+    // Focus on first field
+    const firstField = document.querySelector('input[type="text"]');
+    if (firstField) {
+        firstField.focus();
+    }
+    
+    // Form validation
+    document.getElementById('dish-form').addEventListener('submit', function(event) {
+        let hasIngredients = false;
+        
+        document.querySelectorAll('.ingredient-form-row').forEach(row => {
+            if (row.style.display !== 'none' && !row.querySelector('input[name$="-DELETE"]')?.value) {
+                const quantityInput = row.querySelector('.quantity-input');
+                const ingredientSelect = row.querySelector('.ingredient-select');
+                
+                if (ingredientSelect.value && quantityInput.value) {
+                    hasIngredients = true;
+                }
+            }
+        });
+        
+        if (!hasIngredients) {
+            event.preventDefault();
+            alert('Danie musi zawierać przynajmniej jeden składnik.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock content %}
