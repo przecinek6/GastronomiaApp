@@ -72,14 +72,14 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
                 <!-- Browse Plans -->
-                <a href="#" 
-                   class="group flex items-center p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
+                <a href="{% url 'browse_diet_plans' %}" 
+                   class="group flex items-center p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all duration-200 hover:shadow-lg">
                     <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                         <i data-lucide="search" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800">Przeglądaj plany</h3>
-                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
+                        <p class="text-sm text-gray-600">Znajdź idealny plan dla siebie</p>
                     </div>
                 </a>
 
@@ -252,7 +252,7 @@
                                 <span class="text-sm font-medium text-green-600">149zł/tyg</span>
                             </div>
                             <p class="text-sm text-gray-600 mb-3">Zrównoważona dieta, 1800 kcal/dzień</p>
-                            <a href="#" class="text-green-600 hover:text-green-700 text-sm font-medium opacity-50 cursor-not-allowed">
+                            <a href="{% url 'browse_diet_plans' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
                                 Zobacz szczegóły →
                             </a>
                         </div>
@@ -263,7 +263,7 @@
                                 <span class="text-sm font-medium text-green-600">199zł/tyg</span>
                             </div>
                             <p class="text-sm text-gray-600 mb-3">Dieta ketogeniczna, 1500 kcal/dzień</p>
-                            <a href="#" class="text-green-600 hover:text-green-700 text-sm font-medium opacity-50 cursor-not-allowed">
+                            <a href="{% url 'browse_diet_plans' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
                                 Zobacz szczegóły →
                             </a>
                         </div>
@@ -274,12 +274,12 @@
                                 <span class="text-sm font-medium text-green-600">129zł/tyg</span>
                             </div>
                             <p class="text-sm text-gray-600 mb-3">Wegetariańska dieta, 1600 kcal/dzień</p>
-                            <a href="#" class="text-green-600 hover:text-green-700 text-sm font-medium opacity-50 cursor-not-allowed">
+                            <a href="{% url 'browse_diet_plans' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
                                 Zobacz szczegóły →
                             </a>
                         </div>
                         
-                        <a href="#" class="block text-center bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors opacity-50 cursor-not-allowed">
+                        <a href="{% url 'browse_diet_plans' %}" class="block text-center bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
                             Zobacz wszystkie plany
                         </a>
                         

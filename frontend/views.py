@@ -718,6 +718,328 @@ def client_dashboard(request):
 
 
 # ==========================================
+# PRZEGLĄDANIE PLANÓW DIETETYCZNYCH (KLIENCI)
+# ==========================================
+
+def browse_diet_plans(request):
+    """Lista dostępnych planów dietetycznych dla klientów"""
+    
+    # Parametry z GET
+    sort_by = request.GET.get('sort', 'price_asc')  # price_asc, price_desc, name_asc, name_desc
+    min_price = request.GET.get('min_price', '')
+    max_price = request.GET.get('max_price', '')
+    search = request.GET.get('search', '')
+    
+    # Pobierz tylko aktywne plany
+    plans = DietPlan.objects.filter(is_active=True).prefetch_related(
+        'mealplan_set__dish__dishingredient_set__ingredient'
+    )
+    
+    # Wyszukiwanie
+    if search:
+        plans = plans.filter(
+            Q(name__icontains=search) | Q(description__icontains=search)
+        )
+    
+    # Filtrowanie po cenie
+    if min_price:
+        try:
+            plans = plans.filter(weekly_price__gte=float(min_price))
+        except ValueError:
+            pass
+    
+    if max_price:
+        try:
+            plans = plans.filter(weekly_price__lte=float(max_price))
+        except ValueError:
+            pass
+    
+    # Sortowanie
+    if sort_by == 'price_asc':
+        plans = plans.order_by('weekly_price')
+    elif sort_by == 'price_desc':
+        plans = plans.order_by('-weekly_price')
+    elif sort_by == 'name_asc':
+        plans = plans.order_by('name')
+    elif sort_by == 'name_desc':
+        plans = plans.order_by('-name')
+    else:
+        plans = plans.order_by('weekly_price')
+    
+    # Wzbogać plany o dodatkowe informacje
+    enriched_plans = []
+    for plan in plans:
+        # Policz posiłki w planie
+        meal_count = plan.mealplan_set.count()
+        
+        # Oblicz średnie wartości odżywcze dzienne
+        total_calories = 0
+        total_protein = 0
+        total_fat = 0
+        total_cost = 0
+        
+        daily_meals = {}
+        for meal_plan in plan.mealplan_set.all():
+            day = meal_plan.day_of_week
+            if day not in daily_meals:
+                daily_meals[day] = []
+            daily_meals[day].append(meal_plan.dish)
+        
+        # Oblicz średnie dla pełnych dni
+        full_days_count = 0
+        for day, dishes in daily_meals.items():
+            if len(dishes) == 3:  # Pełny dzień (3 posiłki)
+                full_days_count += 1
+                for dish in dishes:
+                    total_calories += dish.total_calories
+                    total_protein += dish.total_protein
+                    total_fat += dish.total_fat
+                    total_cost += dish.total_cost
+        
+        avg_calories = (float(total_calories) / full_days_count) if full_days_count > 0 else 0
+        avg_protein = (float(total_protein) / full_days_count) if full_days_count > 0 else 0
+        avg_fat = (float(total_fat) / full_days_count) if full_days_count > 0 else 0
+        weekly_food_cost = float(total_cost) * (7 / full_days_count) if full_days_count > 0 else 0
+        
+        # Znajdź alergeny w planie
+        allergens_set = set()
+        for meal_plan in plan.mealplan_set.all():
+            if meal_plan.dish.allergens:
+                dish_allergens = [a.strip() for a in meal_plan.dish.allergens.split(',') if a.strip()]
+                allergens_set.update(dish_allergens)
+        
+        enriched_plans.append({
+            'plan': plan,
+            'meal_count': meal_count,
+            'avg_calories': round(avg_calories),
+            'avg_protein': round(avg_protein, 1),
+            'avg_fat': round(avg_fat, 1),
+            'weekly_food_cost': round(weekly_food_cost, 2),
+            'margin': round(float(plan.weekly_price) - weekly_food_cost, 2),
+            'allergens': sorted(list(allergens_set)),
+            'completion_percentage': round((meal_count / 21) * 100),
+        })
+    
+    context = {
+        'enriched_plans': enriched_plans,
+        'sort_by': sort_by,
+        'min_price': min_price,
+        'max_price': max_price,
+        'search': search,
+        'total_count': len(enriched_plans),
+    }
+    
+    return render(request, 'client/browse_plans.html', context)
+
+
+def diet_plan_detail(request, pk):
+    """Szczegóły planu dietetycznego z pełną siatką posiłków"""
+    
+    plan = get_object_or_404(DietPlan, pk=pk, is_active=True)
+    
+    # Pobierz wszystkie meal_plans dla tego planu
+    meal_plans = MealPlan.objects.filter(diet_plan=plan).select_related('dish').prefetch_related(
+        'dish__dishingredient_set__ingredient'
+    )
+    
+    # Organizuj dane w siatkę 7x3
+    days = [
+        (1, 'Poniedziałek'), (2, 'Wtorek'), (3, 'Środa'), (4, 'Czwartek'),
+        (5, 'Piątek'), (6, 'Sobota'), (7, 'Niedziela')
+    ]
+    
+    meal_types = [
+        ('breakfast', 'Śniadanie'),
+        ('lunch', 'Obiad'),
+        ('dinner', 'Kolacja')
+    ]
+    
+    # Stwórz mapę meal_plans
+    meal_grid = {}
+    for meal_plan in meal_plans:
+        key = f"{meal_plan.day_of_week}_{meal_plan.meal_type}"
+        meal_grid[key] = meal_plan
+    
+    # Przygotuj dane dla szablonu
+    grid_data = []
+    for day_num, day_name in days:
+        day_meals = {}
+        for meal_type, meal_name in meal_types:
+            key = f"{day_num}_{meal_type}"
+            day_meals[meal_type] = meal_grid.get(key)
+        grid_data.append({
+            'day_num': day_num,
+            'day_name': day_name,
+            'meals': day_meals
+        })
+    
+    # Oblicz statystyki planu
+    total_calories = 0
+    total_protein = 0
+    total_fat = 0
+    total_cost = 0
+    allergens_set = set()
+    
+    for meal_plan in meal_plans:
+        dish = meal_plan.dish
+        total_calories += dish.total_calories
+        total_protein += dish.total_protein
+        total_fat += dish.total_fat
+        total_cost += dish.total_cost
+        
+        if dish.allergens:
+            dish_allergens = [a.strip() for a in dish.allergens.split(',') if a.strip()]
+            allergens_set.update(dish_allergens)
+    
+    # Oblicz średnie dzienne (dla 7 dni)
+    avg_daily_calories = total_calories / 7 if meal_plans.count() > 0 else 0
+    avg_daily_protein = total_protein / 7 if meal_plans.count() > 0 else 0
+    avg_daily_fat = total_fat / 7 if meal_plans.count() > 0 else 0
+    
+    # Znajdź podobne plany (do rekomendacji)
+    similar_plans = DietPlan.objects.filter(
+        is_active=True
+    ).exclude(pk=plan.pk).order_by('weekly_price')[:3]
+    
+    context = {
+        'plan': plan,
+        'grid_data': grid_data,
+        'meal_types': meal_types,
+        'days': days,
+        'meal_count': meal_plans.count(),
+        'completion_percentage': round((meal_plans.count() / 21) * 100),
+        'avg_daily_calories': round(avg_daily_calories),
+        'avg_daily_protein': round(avg_daily_protein, 1),
+        'avg_daily_fat': round(avg_daily_fat, 1),
+        'weekly_cost': round(total_cost, 2),
+        'allergens': sorted(list(allergens_set)),
+        'similar_plans': similar_plans,
+    }
+    
+    return render(request, 'client/plan_detail.html', context)
+
+
+def compare_diet_plans(request):
+    """Porównanie wybranych planów dietetycznych"""
+    
+    # Pobierz ID planów z GET parametrów
+    plan_ids = request.GET.getlist('plans')
+    
+    # Ogranicz do maksymalnie 3 planów
+    plan_ids = plan_ids[:3]
+    
+    if not plan_ids:
+        messages.error(request, 'Wybierz plany do porównania.')
+        return redirect('browse_diet_plans')
+    
+    # Pobierz plany
+    plans = DietPlan.objects.filter(
+        id__in=plan_ids, 
+        is_active=True
+    ).prefetch_related('mealplan_set__dish__dishingredient_set__ingredient')
+    
+    if not plans.exists():
+        messages.error(request, 'Nie znaleziono wybranych planów.')
+        return redirect('browse_diet_plans')
+    
+    # Przygotuj dane porównawcze
+    comparison_data = []
+    for plan in plans:
+        # Oblicz statystyki
+        meal_plans = plan.mealplan_set.all()
+        
+        total_calories = sum(float(mp.dish.total_calories) for mp in meal_plans)
+        total_protein = sum(float(mp.dish.total_protein) for mp in meal_plans)
+        total_fat = sum(float(mp.dish.total_fat) for mp in meal_plans)
+        total_cost = sum(float(mp.dish.total_cost) for mp in meal_plans)
+        
+        # Znajdź alergeny
+        allergens_set = set()
+        for meal_plan in meal_plans:
+            if meal_plan.dish.allergens:
+                dish_allergens = [a.strip() for a in meal_plan.dish.allergens.split(',') if a.strip()]
+                allergens_set.update(dish_allergens)
+        
+        # Policz posiłki według typu
+        meal_type_counts = {'breakfast': 0, 'lunch': 0, 'dinner': 0}
+        for meal_plan in meal_plans:
+            meal_type_counts[meal_plan.meal_type] += 1
+        
+        comparison_data.append({
+            'plan': plan,
+            'meal_count': meal_plans.count(),
+            'completion_percentage': round((meal_plans.count() / 21) * 100),
+            'avg_daily_calories': round(total_calories / 7) if meal_plans.count() > 0 else 0,
+            'avg_daily_protein': round(total_protein / 7, 1) if meal_plans.count() > 0 else 0,
+            'avg_daily_fat': round(total_fat / 7, 1) if meal_plans.count() > 0 else 0,
+            'weekly_cost': round(total_cost, 2),
+            'allergens': sorted(list(allergens_set)),
+            'meal_type_counts': meal_type_counts,
+        })
+    
+    context = {
+        'comparison_data': comparison_data,
+        'plan_count': len(comparison_data),
+    }
+    
+    return render(request, 'client/compare_plans.html', context)
+
+
+@require_GET
+def dish_detail_api(request, dish_id):
+    """API endpoint do pobierania szczegółów dania"""
+    try:
+        dish = Dish.objects.select_related().prefetch_related(
+            'dishingredient_set__ingredient'
+        ).get(id=dish_id, is_deleted=False)
+        
+        # Przygotuj dane składników
+        ingredients_data = []
+        for dish_ingredient in dish.dishingredient_set.all():
+            ingredient = dish_ingredient.ingredient
+            quantity = float(dish_ingredient.quantity_grams)
+            
+            # Oblicz wartości odżywcze dla tej ilości
+            calories = (float(ingredient.calories_per_100g) * quantity) / 100
+            protein = (float(ingredient.protein_per_100g) * quantity) / 100
+            fat = (float(ingredient.fat_per_100g) * quantity) / 100
+            cost = (float(ingredient.price_per_100g) * quantity) / 100
+            
+            ingredients_data.append({
+                'name': ingredient.name,
+                'quantity_grams': quantity,
+                'calories': round(calories, 1),
+                'protein': round(protein, 1),
+                'fat': round(fat, 1),
+                'cost': round(cost, 2),
+            })
+        
+        # Przygotuj alergeny
+        allergens = []
+        if dish.allergens:
+            allergens = [a.strip() for a in dish.allergens.split(',') if a.strip()]
+        
+        data = {
+            'id': dish.id,
+            'name': dish.name,
+            'description': dish.description,
+            'meal_type': dish.get_meal_type_display(),
+            'allergens': allergens,
+            'image_url': dish.image.url if dish.image else None,
+            'total_calories': round(float(dish.total_calories), 1),
+            'total_protein': round(float(dish.total_protein), 1),
+            'total_fat': round(float(dish.total_fat), 1),
+            'total_cost': round(float(dish.total_cost), 2),
+            'ingredients': ingredients_data,
+        }
+        
+        return JsonResponse(data)
+        
+    except Dish.DoesNotExist:
+        return JsonResponse({'error': 'Danie nie znalezione'}, status=404)
+
+
+# ==========================================
 # API ENDPOINTY
 # ==========================================
 

@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Przeglądaj plany dietetyczne{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Wybierz idealny plan dietetyczny
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Odkryj nasze starannie opracowane plany dietetyczne dostosowane do Twoich potrzeb i stylu życia
+            </p>
+        </div>
+
+        <!-- Filters and Sort -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <form method="get" class="flex flex-col lg:flex-row gap-4 items-end">
+                <!-- Search -->
+                <div class="flex-1">
+                    <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Wyszukaj plan</label>
+                    <input type="text" 
+                           name="search" 
+                           id="search"
+                           value="{{ search }}"
+                           placeholder="Wprowadź nazwę planu lub słowo kluczowe..."
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                </div>
+
+                <!-- Price Range -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label for="min_price" class="block text-sm font-semibold text-gray-700 mb-2">Cena od</label>
+                        <input type="number" 
+                               name="min_price" 
+                               id="min_price"
+                               value="{{ min_price }}"
+                               placeholder="0"
+                               min="0"
+                               step="10"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label for="max_price" class="block text-sm font-semibold text-gray-700 mb-2">Cena do</label>
+                        <input type="number" 
+                               name="max_price" 
+                               id="max_price"
+                               value="{{ max_price }}"
+                               placeholder="500"
+                               min="0"
+                               step="10"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                    </div>
+                </div>
+
+                <!-- Sort -->
+                <div>
+                    <label for="sort" class="block text-sm font-semibold text-gray-700 mb-2">Sortuj według</label>
+                    <select name="sort" 
+                            id="sort"
+                            class="px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                        <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Cena: od najniższej</option>
+                        <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Cena: od najwyższej</option>
+                        <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Nazwa: A-Z</option>
+                        <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Nazwa: Z-A</option>
+                    </select>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-2">
+                    <button type="submit" 
+                            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                        <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
+                        Filtruj
+                    </button>
+                    <a href="{% url 'browse_diet_plans' %}" 
+                       class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4 inline mr-1"></i>
+                        Wyczyść
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">
+                    {% if total_count == 1 %}
+                        Znaleziono {{ total_count }} plan
+                    {% elif total_count < 5 %}
+                        Znaleziono {{ total_count }} plany
+                    {% else %}
+                        Znaleziono {{ total_count }} planów
+                    {% endif %}
+                </h2>
+                {% if search %}
+                    <p class="text-gray-600">dla zapytania: "{{ search }}"</p>
+                {% endif %}
+            </div>
+            
+            {% if enriched_plans|length > 1 %}
+                <div>
+                    <button id="compare-selected" 
+                            class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                        <i data-lucide="git-compare" class="w-4 h-4 inline mr-2"></i>
+                        Porównaj wybrane (<span id="compare-count">0</span>)
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Plans Grid -->
+        {% if enriched_plans %}
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
+                {% for enriched_plan in enriched_plans %}
+                    {% with plan=enriched_plan.plan %}
+                        <div class="bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 plan-card">
+                            <!-- Plan Header -->
+                            <div class="p-6 bg-gradient-to-r from-green-500 to-blue-600 text-white relative">
+                                <!-- Compare Checkbox -->
+                                <div class="absolute top-4 right-4">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="checkbox" 
+                                               class="compare-checkbox w-5 h-5 text-green-600 bg-white border-white rounded focus:ring-green-500"
+                                               data-plan-id="{{ plan.id }}"
+                                               data-plan-name="{{ plan.name }}">
+                                        <span class="ml-2 text-sm">Porównaj</span>
+                                    </label>
+                                </div>
+
+                                <h3 class="text-2xl font-bold mb-2">{{ plan.name }}</h3>
+                                <p class="text-green-100 mb-4">{{ plan.description|truncatewords:15 }}</p>
+                                
+                                <!-- Completion Badge -->
+                                <div class="flex items-center justify-between">
+                                    <span class="bg-white/20 px-3 py-1 rounded-full text-sm">
+                                        {{ enriched_plan.meal_count }}/21 posiłków
+                                    </span>
+                                    <span class="text-sm opacity-90">
+                                        {{ enriched_plan.completion_percentage }}% kompletny
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Pricing -->
+                            <div class="p-6 border-b border-gray-100">
+                                <div class="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <div class="text-2xl font-bold text-green-600">{{ plan.weekly_price }}zł</div>
+                                        <div class="text-sm text-gray-500">Tydzień</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xl font-bold text-blue-600">{{ plan.monthly_price }}zł</div>
+                                        <div class="text-sm text-gray-500">Miesiąc</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-bold text-purple-600">{{ plan.yearly_price }}zł</div>
+                                        <div class="text-sm text-gray-500">Rok</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nutritional Summary -->
+                            <div class="p-6 border-b border-gray-100">
+                                <h4 class="font-semibold text-gray-800 mb-3">Średnie wartości dzienne</h4>
+                                <div class="grid grid-cols-3 gap-4 text-center">
+                                    <div class="bg-blue-50 rounded-lg p-3">
+                                        <div class="text-lg font-bold text-blue-800">{{ enriched_plan.avg_calories }}</div>
+                                        <div class="text-xs text-blue-600">kcal</div>
+                                    </div>
+                                    <div class="bg-green-50 rounded-lg p-3">
+                                        <div class="text-lg font-bold text-green-800">{{ enriched_plan.avg_protein }}g</div>
+                                        <div class="text-xs text-green-600">białko</div>
+                                    </div>
+                                    <div class="bg-yellow-50 rounded-lg p-3">
+                                        <div class="text-lg font-bold text-yellow-800">{{ enriched_plan.avg_fat }}g</div>
+                                        <div class="text-xs text-yellow-600">tłuszcze</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Allergens -->
+                            {% if enriched_plan.allergens %}
+                                <div class="p-6 border-b border-gray-100">
+                                    <h4 class="font-semibold text-gray-800 mb-3">Alergeny w planie</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        {% for allergen in enriched_plan.allergens %}
+                                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">{{ allergen }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Actions -->
+                            <div class="p-6 space-y-3">
+                                <a href="{% url 'diet_plan_detail' plan.pk %}" 
+                                   class="block w-full bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    Zobacz szczegóły planu
+                                </a>
+                                <button class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors opacity-50 cursor-not-allowed">
+                                    Zamów plan (wkrótce)
+                                </button>
+                            </div>
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-16">
+                <i data-lucide="search-x" class="w-20 h-20 text-gray-400 mx-auto mb-6"></i>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Nie znaleziono planów</h3>
+                <p class="text-gray-600 mb-8">Spróbuj zmienić kryteria wyszukiwania lub usuń filtry</p>
+                <a href="{% url 'browse_diet_plans' %}" 
+                   class="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                    Zobacz wszystkie plany
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Call to Action -->
+        <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl p-8 text-white text-center">
+            <h2 class="text-3xl font-bold mb-4">Nie możesz się zdecydować?</h2>
+            <p class="text-lg mb-6 opacity-90">
+                Skorzystaj z naszego kalkulatora i znajdź plan idealnie dopasowany do Twoich potrzeb
+            </p>
+            <button class="bg-white text-gray-800 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors opacity-50 cursor-not-allowed">
+                Kalkulator planu (wkrótce)
+            </button>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Compare functionality
+    const compareCheckboxes = document.querySelectorAll('.compare-checkbox');
+    const compareButton = document.getElementById('compare-selected');
+    const compareCount = document.getElementById('compare-count');
+    
+    let selectedPlans = [];
+    
+    compareCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const planId = this.dataset.planId;
+            const planName = this.dataset.planName;
+            
+            if (this.checked) {
+                if (selectedPlans.length < 3) {
+                    selectedPlans.push({ id: planId, name: planName });
+                } else {
+                    this.checked = false;
+                    alert('Możesz porównać maksymalnie 3 plany jednocześnie.');
+                }
+            } else {
+                selectedPlans = selectedPlans.filter(plan => plan.id !== planId);
+            }
+            
+            updateCompareButton();
+        });
+    });
+    
+    function updateCompareButton() {
+        compareCount.textContent = selectedPlans.length;
+        compareButton.disabled = selectedPlans.length < 2;
+        
+        if (selectedPlans.length >= 2) {
+            compareButton.classList.remove('disabled:opacity-50', 'disabled:cursor-not-allowed');
+        } else {
+            compareButton.classList.add('disabled:opacity-50', 'disabled:cursor-not-allowed');
+        }
+    }
+    
+    compareButton.addEventListener('click', function() {
+        if (selectedPlans.length >= 2) {
+            const planIds = selectedPlans.map(plan => plan.id);
+            const queryString = planIds.map(id => `plans=${id}`).join('&');
+            window.location.href = `/plans/compare/?${queryString}`;
+        }
+    });
+    
+    // Auto-submit form on sort change
+    document.getElementById('sort').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    // Smooth animations
+    const cards = document.querySelectorAll('.plan-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate-fade-in');
+    });
+});
+</script>
+
+<style>
+@keyframes fade-in {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+}
+</style>
+{% endblock content %}

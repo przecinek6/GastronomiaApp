@@ -11,6 +11,12 @@ urlpatterns = [
     # Panel klienta
     path('dashboard/', views.client_dashboard, name='client_dashboard'),
 
+    # Przeglądanie planów dietetycznych (klienci)
+    path('plans/', views.browse_diet_plans, name='browse_diet_plans'),
+    path('plans/<int:pk>/', views.diet_plan_detail, name='diet_plan_detail'),
+    path('plans/compare/', views.compare_diet_plans, name='compare_diet_plans'),
+    
+
     # Panel zarządzania
     path('manage/', views.manage_dashboard, name='manage_dashboard'),
     
@@ -35,4 +41,5 @@ urlpatterns = [
     # API endpointy
     path('api/ingredient/<int:ingredient_id>/', views.ingredient_data_api, name='ingredient_data_api'),
     path('api/ingredients/', views.ingredients_list_api, name='ingredients_list_api'),
+    path('api/dish/<int:dish_id>/', views.dish_detail_api, name='dish_detail_api'),
 ]

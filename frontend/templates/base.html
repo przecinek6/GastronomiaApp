@@ -81,7 +81,7 @@
                 
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="{% url 'home_page' %}#home" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Strona główna</a>
-                    <a href="{% url 'home_page' %}#plans" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Plany</a>
+                    <a href="{% url 'browse_diet_plans' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Plany</a>
                     <a href="{% url 'home_page' %}#how-it-works" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Jak to działa</a>
                     <a href="{% url 'home_page' %}#contact" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Kontakt</a>
                 </div>
@@ -120,7 +120,7 @@
         <div v-show="mobileMenuOpen" class="md:hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <a href="{% url 'home_page' %}#home" class="block px-3 py-2 text-gray-700 hover:text-green-600">Strona główna</a>
-                <a href="{% url 'home_page' %}#plans" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
+                <a href="{% url 'browse_diet_plans' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
                 <a href="{% url 'home_page' %}#how-it-works" class="block px-3 py-2 text-gray-700 hover:text-green-600">Jak to działa</a>
                 <a href="{% url 'home_page' %}#contact" class="block px-3 py-2 text-gray-700 hover:text-green-600">Kontakt</a>
                 {% if user.is_authenticated %}
