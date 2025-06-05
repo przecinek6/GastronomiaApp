@@ -11,60 +11,7 @@
             <p class="text-gray-600">Zarządzaj swoimi subskrypcjami i odkrywaj nowe plany dietetyczne</p>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Aktywne subskrypcje</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ active_subscriptions }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Obecnie aktywne</p>
-                    </div>
-                    <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center">
-                        <i data-lucide="calendar-check" class="w-6 h-6 text-white"></i>
-                    </div>
-                </div>
-            </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Punkty lojalnościowe</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ loyalty_points }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Dostępne do wykorzystania</p>
-                    </div>
-                    <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
-                        <i data-lucide="star" class="w-6 h-6 text-white"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Zamówienia</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ total_orders }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Łącznie złożone</p>
-                    </div>
-                    <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
-                        <i data-lucide="shopping-bag" class="w-6 h-6 text-white"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-600">Zaoszczędzone</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ total_saved }}zł</p>
-                        <p class="text-xs text-gray-500 mt-1">Z punktów i promocji</p>
-                    </div>
-                    <div class="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
-                        <i data-lucide="piggy-bank" class="w-6 h-6 text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Quick Actions -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
@@ -82,20 +29,6 @@
                         <p class="text-sm text-gray-600">Znajdź idealny plan dla siebie</p>
                     </div>
                 </a>
-
-                <!-- Order New Plan -->
-                <a href="#" 
-                   class="group flex items-center p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
-                    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <i data-lucide="plus-circle" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800">Zamów plan</h3>
-                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
-                    </div>
-                </a>
-
-
 
                 <!-- Change Diet -->
                 <a href="#" 
@@ -121,6 +54,17 @@
                     </div>
                 </a>
 
+                <!-- Profile -->
+                <a href="#" 
+                   class="group flex items-center p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
+                    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="user" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Profil</h3>
+                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
+                    </div>
+                </a>
 
             </div>
         </div>
@@ -198,7 +142,6 @@
                     </div>
                 </div>
 
-
             </div>
 
             <!-- Right Column - Sidebar -->
@@ -238,57 +181,6 @@
                     </a>
                 </div>
 
-                <!-- Available Plans Preview -->
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b border-gray-100">
-                        <h3 class="text-lg font-bold text-gray-800">Dostępne plany</h3>
-                    </div>
-                    
-                    <div class="p-6 space-y-4">
-                        <!-- Plan Preview -->
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-semibold text-gray-800">Plan Standard</h4>
-                                <span class="text-sm font-medium text-green-600">149zł/tyg</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-3">Zrównoważona dieta, 1800 kcal/dzień</p>
-                            <a href="{% url 'browse_diet_plans' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
-                                Zobacz szczegóły →
-                            </a>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-semibold text-gray-800">Plan Keto</h4>
-                                <span class="text-sm font-medium text-green-600">199zł/tyg</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-3">Dieta ketogeniczna, 1500 kcal/dzień</p>
-                            <a href="{% url 'browse_diet_plans' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
-                                Zobacz szczegóły →
-                            </a>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-semibold text-gray-800">Plan Vege</h4>
-                                <span class="text-sm font-medium text-green-600">129zł/tyg</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-3">Wegetariańska dieta, 1600 kcal/dzień</p>
-                            <a href="{% url 'browse_diet_plans' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
-                                Zobacz szczegóły →
-                            </a>
-                        </div>
-                        
-                        <a href="{% url 'browse_diet_plans' %}" class="block text-center bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
-                            Zobacz wszystkie plany
-                        </a>
-                        
-                        <div class="text-center text-gray-500 text-sm">
-                            Funkcjonalność w przygotowaniu
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Referral Program -->
                 <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
                     <h3 class="text-lg font-bold mb-4">Poleć znajomemu</h3>
@@ -306,42 +198,6 @@
                     </a>
                 </div>
 
-                <!-- Profile Completion -->
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">Uzupełnij profil</h3>
-                    
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Podstawowe dane</span>
-                            <span class="text-green-600">
-                                <i data-lucide="check" class="w-4 h-4"></i>
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Preferencje dietetyczne</span>
-                            <span class="text-gray-400">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Adres dostawy</span>
-                            <span class="text-gray-400">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4">
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 33%"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">33% ukończone</p>
-                    </div>
-                    
-                    <a href="#" class="block text-center bg-green-500 text-white py-2 rounded-lg mt-4 hover:bg-green-600 transition-colors opacity-50 cursor-not-allowed">
-                        Uzupełnij profil
-                    </a>
-                </div>
             </div>
         </div>
 
