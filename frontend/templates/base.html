@@ -88,17 +88,58 @@
 
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        {% comment %} <span class="text-gray-700">Witaj, {{ user.first_name|default:user.username }}!</span> {% endcomment %}
-                        <a href="{% url 'logout_view' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Wyloguj</a>
-                        {% if user.userprofile.role == 'manager' %}
-                            <a href={% url 'manage_dashboard' %} class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                                Panel menadżera
-                            </a>
-                        {% else %}
-                            <a href="{% url 'client_dashboard' %}" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                                Panel klienta
-                            </a>
-                        {% endif %}
+                        <!-- User Menu Dropdown -->
+                        <div class="relative">
+                            <button @click="userMenuOpen = !userMenuOpen" 
+                                    class="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors duration-200 focus:outline-none">
+                                <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">{{ user.first_name.0|default:user.username.0|upper }}</span>
+                                </div>
+                                <span class="hidden md:block">{{ user.first_name|default:user.username }}</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': userMenuOpen}"></i>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div v-show="userMenuOpen" 
+                                @click.away="userMenuOpen = false"
+                                class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-fade-in">
+                                <div class="px-4 py-3 border-b border-gray-100">
+                                    <p class="text-sm font-medium text-gray-800">{{ user.first_name }} {{ user.last_name }}</p>
+                                    <p class="text-xs text-gray-600">{{ user.email }}</p>
+                                </div>
+                                
+                                {% if user.userprofile.role == 'manager' %}
+                                    <a href="{% url 'manage_dashboard' %}" 
+                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                        <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                                        Panel menadżera
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'client_dashboard' %}" 
+                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                        <i data-lucide="home" class="w-4 h-4 mr-3"></i>
+                                        Dashboard
+                                    </a>
+                                    <a href="{% url 'client_profile' %}" 
+                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                        <i data-lucide="user" class="w-4 h-4 mr-3"></i>
+                                        Profil
+                                    </a>
+                                    <a href="{% url 'browse_diet_plans' %}" 
+                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                        <i data-lucide="calendar" class="w-4 h-4 mr-3"></i>
+                                        Plany dietetyczne
+                                    </a>
+                                {% endif %}
+                                
+                                <hr class="my-2">
+                                <a href="{% url 'logout_view' %}" 
+                                class="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                    <i data-lucide="log-out" class="w-4 h-4 mr-3"></i>
+                                    Wyloguj się
+                                </a>
+                            </div>
+                        </div>
                     {% else %}
                         <a href="{% url 'login_view' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Logowanie</a>
                         <a href="{% url 'register' %}" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
@@ -123,13 +164,16 @@
                 <a href="{% url 'browse_diet_plans' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
                 <a href="{% url 'home_page' %}#how-it-works" class="block px-3 py-2 text-gray-700 hover:text-green-600">Jak to działa</a>
                 <a href="{% url 'home_page' %}#contact" class="block px-3 py-2 text-gray-700 hover:text-green-600">Kontakt</a>
+                
                 {% if user.is_authenticated %}
-                    <a href="{% url 'logout_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Wyloguj</a>
+                    <hr class="my-2">
                     {% if user.userprofile.role == 'manager' %}
-                        <a href={% url 'manage_dashboard' %} class="block px-3 py-2 bg-purple-500 text-white rounded-lg">Panel menadżera</a>
+                        <a href="{% url 'manage_dashboard' %}" class="block px-3 py-2 bg-purple-500 text-white rounded-lg">Panel menadżera</a>
                     {% else %}
-                        <a href="{% url 'client_dashboard' %}" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Panel klienta</a>
+                        <a href="{% url 'client_dashboard' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Dashboard</a>
+                        <a href="{% url 'client_profile' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Profil</a>
                     {% endif %}
+                    <a href="{% url 'logout_view' %}" class="block px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">Wyloguj</a>
                 {% else %}
                     <a href="{% url 'login_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Logowanie</a>
                     <a href="{% url 'register' %}" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Zamów teraz</a>
@@ -206,6 +250,7 @@
             data() {
                 return {
                     mobileMenuOpen: false,
+                    userMenuOpen: false,
                     currentPlan: 'standard',
                     duration: 'week'
                 }
@@ -232,6 +277,13 @@
                 document.querySelectorAll('[data-animate]').forEach(el => {
                     observer.observe(el);
                 });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.relative')) {
+                        this.userMenuOpen = false;
+                    }
+                });
             },
             methods: {
                 scrollToSection(sectionId) {
@@ -239,6 +291,12 @@
                         behavior: 'smooth' 
                     });
                     this.mobileMenuOpen = false;
+                },
+                toggleUserMenu() {
+                    this.userMenuOpen = !this.userMenuOpen;
+                },
+                closeUserMenu() {
+                    this.userMenuOpen = false;
                 }
             }
         }).mount('#app');

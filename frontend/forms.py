@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.core.exceptions import ValidationError
 from datetime import date
 from frontend.models import Ingredient, Dish, DietPlan
@@ -338,3 +338,188 @@ class DietPlanForm(forms.ModelForm):
         if weekly_price and weekly_price <= 0:
             raise ValidationError('Cena musi być większa od 0.')
         return weekly_price
+    
+
+class ProfileUpdateForm(forms.ModelForm):
+    """Formularz do edycji danych osobowych"""
+    phone = forms.CharField(
+        max_length=15,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Numer telefonu'
+        })
+    )
+    
+    address = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Adres zamieszkania',
+            'rows': 3
+        })
+    )
+    
+    date_of_birth = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'type': 'date'
+        })
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Stylowanie pól User
+        self.fields['first_name'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Imię'
+        })
+        
+        self.fields['last_name'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Nazwisko'
+        })
+        
+        self.fields['email'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Adres email'
+        })
+        
+        # Polskie etykiety
+        self.fields['first_name'].label = 'Imię'
+        self.fields['last_name'].label = 'Nazwisko'
+        self.fields['email'].label = 'Adres email'
+        
+        # Wypełnij pola z UserProfile jeśli istnieje
+        if hasattr(self.instance, 'userprofile'):
+            profile = self.instance.userprofile
+            self.fields['phone'].initial = profile.phone
+            self.fields['address'].initial = profile.address
+            self.fields['date_of_birth'].initial = profile.date_of_birth
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Użytkownik z tym adresem email już istnieje.')
+        return email
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    """Customowy formularz zmiany hasła"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Stylowanie pól
+        self.fields['old_password'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Obecne hasło'
+        })
+        
+        self.fields['new_password1'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Nowe hasło'
+        })
+        
+        self.fields['new_password2'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'placeholder': 'Potwierdź nowe hasło'
+        })
+        
+        # Polskie etykiety
+        self.fields['old_password'].label = 'Obecne hasło'
+        self.fields['new_password1'].label = 'Nowe hasło'
+        self.fields['new_password2'].label = 'Potwierdź nowe hasło'
+
+
+class DeliveryAddressForm(forms.ModelForm):
+    """Formularz do edycji adresu dostawy"""
+    delivery_address = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Pełny adres dostawy (ulica, numer, kod pocztowy, miasto)',
+            'rows': 3
+        })
+    )
+    
+    delivery_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Instrukcje dla kuriera (kod bramy, piętro, godziny dostaw, uwagi)',
+            'rows': 4
+        })
+    )
+
+    class Meta:
+        model = User
+        fields = []
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Polskie etykiety
+        self.fields['delivery_address'].label = 'Adres dostawy'
+        self.fields['delivery_notes'].label = 'Instrukcje dostawy'
+        
+        # Wypełnij pola z UserProfile jeśli istnieje
+        if hasattr(self.instance, 'userprofile'):
+            profile = self.instance.userprofile
+            # Tymczasowo używamy address dla delivery_address
+            # W przyszłości można dodać osobne pole w UserProfile
+            self.fields['delivery_address'].initial = profile.address
+            # delivery_notes można dodać jako nowe pole w UserProfile
+
+
+class NotificationSettingsForm(forms.Form):
+    """Formularz ustawień powiadomień"""
+    newsletter = forms.BooleanField(
+        required=False,
+        label='Newsletter z nowościami',
+        help_text='Otrzymuj informacje o nowych planach i promocjach',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
+        })
+    )
+    
+    subscription_reminders = forms.BooleanField(
+        required=False,
+        label='Przypomnienia o końcu subskrypcji',
+        help_text='Otrzymuj powiadomienia przed zakończeniem subskrypcji',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
+        })
+    )
+    
+    delivery_notifications = forms.BooleanField(
+        required=False,
+        label='Powiadomienia o dostawach',
+        help_text='Informacje o statusie przygotowania i dostawy posiłków',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
+        })
+    )
+    
+    diet_change_confirmations = forms.BooleanField(
+        required=False,
+        label='Potwierdzenia zmian diety',
+        help_text='Powiadomienia o zmianach planu dietetycznego',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
+        })
+    )
+    
+    promotional_offers = forms.BooleanField(
+        required=False,
+        label='Oferty promocyjne',
+        help_text='Specjalne oferty i zniżki dostosowane do Twoich preferencji',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
+        })
+    )

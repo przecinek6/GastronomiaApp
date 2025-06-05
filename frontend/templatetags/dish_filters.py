@@ -46,3 +46,52 @@ def percentage(value, total):
         return round((float(value) / float(total)) * 100, 1)
     except ValueError:
         return 0
+
+@register.filter
+def sub(value, arg):
+    """Odejmowanie dwóch wartości"""
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return 0
+
+@register.filter
+def abs_value(value):
+    """Wartość bezwzględna"""
+    try:
+        return abs(float(value))
+    except (ValueError, TypeError):
+        return 0
+
+@register.filter
+def progress_percentage(points, level):
+    """Oblicza procent postępu do następnego poziomu"""
+    try:
+        points = int(points)
+        if level == 'bronze':
+            return min((points / 500) * 100, 100)
+        elif level == 'silver':
+            return min(((points - 500) / 500) * 100, 100) if points >= 500 else 0
+        elif level == 'gold':
+            return min(((points - 1000) / 1000) * 100, 100) if points >= 1000 else 0
+        elif level == 'platinum':
+            return 100
+        return 0
+    except (ValueError, TypeError):
+        return 0
+
+@register.filter
+def points_to_next_level(points, level):
+    """Oblicza ile punktów potrzeba do następnego poziomu"""
+    try:
+        points = int(points)
+        if level == 'bronze':
+            return max(500 - points, 0)
+        elif level == 'silver':
+            return max(1000 - points, 0)
+        elif level == 'gold':
+            return max(2000 - points, 0)
+        else:
+            return 0
+    except (ValueError, TypeError):
+        return 0

@@ -20,7 +20,7 @@
                 
                 <!-- Browse Plans -->
                 <a href="{% url 'browse_diet_plans' %}" 
-                   class="group flex items-center p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all duration-200 hover:shadow-lg">
+                class="group flex items-center p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all duration-200 hover:shadow-lg">
                     <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                         <i data-lucide="search" class="w-6 h-6 text-white"></i>
                     </div>
@@ -30,9 +30,21 @@
                     </div>
                 </a>
 
+                <!-- Profile -->
+                <a href="{% url 'client_profile' %}" 
+                class="group flex items-center p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 hover:shadow-lg">
+                    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                        <i data-lucide="user" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Profil</h3>
+                        <p class="text-sm text-gray-600">Zarządzaj swoimi danymi</p>
+                    </div>
+                </a>
+
                 <!-- Change Diet -->
                 <a href="#" 
-                   class="group flex items-center p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
+                class="group flex items-center p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
                     <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                         <i data-lucide="repeat" class="w-6 h-6 text-white"></i>
                     </div>
@@ -44,24 +56,12 @@
 
                 <!-- Pause Subscription -->
                 <a href="#" 
-                   class="group flex items-center p-6 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl hover:from-yellow-100 hover:to-yellow-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
+                class="group flex items-center p-6 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl hover:from-yellow-100 hover:to-yellow-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
                     <div class="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                         <i data-lucide="pause" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800">Wstrzymaj subskrypcję</h3>
-                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
-                    </div>
-                </a>
-
-                <!-- Profile -->
-                <a href="#" 
-                   class="group flex items-center p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
-                    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <i data-lucide="user" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800">Profil</h3>
                         <p class="text-sm text-gray-600">Wkrótce dostępne</p>
                     </div>
                 </a>

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -8,7 +8,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from frontend.models import UserProfile, Ingredient, Dish, DishIngredient, DietPlan, MealPlan
-from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet, DietPlanForm
+from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet, DietPlanForm, ProfileUpdateForm, CustomPasswordChangeForm, DeliveryAddressForm, NotificationSettingsForm
 import traceback
 
 User = get_user_model()
@@ -715,6 +715,243 @@ def client_dashboard(request):
     }
     
     return render(request, 'client/dashboard.html', context)
+
+
+@login_required
+def client_profile(request):
+    """Główny widok profilu klienta z edycją inline"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Pobierz profil użytkownika
+    try:
+        profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        # Utwórz profil jeśli nie istnieje
+        profile = UserProfile.objects.create(
+            user=request.user,
+            role='client'
+        )
+    
+    # Pobierz konto lojalnościowe
+    try:
+        loyalty_account = request.user.loyaltyaccount
+    except:
+        from frontend.models import LoyaltyAccount
+        loyalty_account = LoyaltyAccount.objects.create(
+            user=request.user,
+            points_balance=0,
+            total_points_earned=0,
+            loyalty_level='bronze'
+        )
+    
+    # Obsługa POST - aktualizacja danych
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Aktualizuj dane User
+                user = request.user
+                user.first_name = request.POST.get('first_name', '').strip()
+                user.last_name = request.POST.get('last_name', '').strip()
+                
+                # Sprawdź czy email się zmienił i czy nie jest zajęty
+                new_email = request.POST.get('email', '').strip()
+                if new_email != user.email:
+                    if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+                        messages.error(request, 'Adres email jest już używany przez inne konto.')
+                        return redirect('client_profile')
+                    user.email = new_email
+                
+                user.save()
+                
+                # Aktualizuj dane UserProfile
+                profile.phone = request.POST.get('phone', '').strip()
+                profile.address = request.POST.get('address', '').strip()
+                
+                # Data urodzenia
+                date_of_birth = request.POST.get('date_of_birth', '').strip()
+                if date_of_birth:
+                    try:
+                        from datetime import datetime
+                        profile.date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+                    except ValueError:
+                        profile.date_of_birth = None
+                else:
+                    profile.date_of_birth = None
+                
+                profile.save()
+                
+                messages.success(request, 'Dane zostały zaktualizowane pomyślnie.')
+                return redirect('client_profile')
+                
+        except Exception as e:
+            messages.error(request, f'Wystąpił błąd podczas zapisywania: {str(e)}')
+    
+    context = {
+        'profile': profile,
+        'loyalty_account': loyalty_account,
+        'referral_code': f'USER{request.user.id:03d}',
+    }
+    
+    return render(request, 'client/profile/main.html', context)
+
+
+@login_required
+def profile_personal_data(request):
+    """Edycja danych osobowych"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Zapisz dane User
+                    user = form.save()
+                    
+                    # Zapisz dane UserProfile
+                    profile, created = UserProfile.objects.get_or_create(user=user)
+                    profile.phone = form.cleaned_data.get('phone', '')
+                    profile.address = form.cleaned_data.get('address', '')
+                    profile.date_of_birth = form.cleaned_data.get('date_of_birth')
+                    profile.save()
+                    
+                    messages.success(request, 'Dane osobowe zostały zaktualizowane.')
+                    return redirect('profile_personal_data')
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas zapisywania: {str(e)}')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+    
+    return render(request, 'client/profile/personal_data.html', {
+        'form': form,
+        'title': 'Dane osobowe'
+    })
+
+
+@login_required
+def profile_change_password(request):
+    """Zmiana hasła"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Utrzymuj sesję po zmianie hasła
+            messages.success(request, 'Hasło zostało zmienione pomyślnie.')
+            return redirect('profile_change_password')
+    else:
+        form = CustomPasswordChangeForm(request.user)
+    
+    return render(request, 'client/profile/change_password.html', {
+        'form': form,
+        'title': 'Zmiana hasła'
+    })
+
+
+@login_required
+def profile_delivery_address(request):
+    """Edycja adresu dostawy"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    if request.method == 'POST':
+        form = DeliveryAddressForm(request.POST, instance=request.user)
+        if form.is_valid():
+            try:
+                # Zapisz adres dostawy w UserProfile
+                profile, created = UserProfile.objects.get_or_create(user=request.user)
+                profile.address = form.cleaned_data.get('delivery_address', '')
+                # W przyszłości można dodać osobne pole delivery_notes
+                profile.save()
+                
+                messages.success(request, 'Adres dostawy został zaktualizowany.')
+                return redirect('profile_delivery_address')
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas zapisywania: {str(e)}')
+    else:
+        form = DeliveryAddressForm(instance=request.user)
+    
+    return render(request, 'client/profile/delivery_address.html', {
+        'form': form,
+        'title': 'Adres dostawy'
+    })
+
+
+@login_required
+def profile_notifications(request):
+    """Ustawienia powiadomień"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Pobierz obecne ustawienia (dla przyszłej implementacji)
+    # Na razie używamy domyślnych wartości
+    initial_data = {
+        'newsletter': True,
+        'subscription_reminders': True,
+        'delivery_notifications': True,
+        'diet_change_confirmations': True,
+        'promotional_offers': False,
+    }
+    
+    if request.method == 'POST':
+        form = NotificationSettingsForm(request.POST)
+        if form.is_valid():
+            # W przyszłości można dodać model NotificationSettings
+            # Na razie tylko pokazujemy komunikat o zapisaniu
+            messages.success(request, 'Ustawienia powiadomień zostały zapisane.')
+            return redirect('profile_notifications')
+    else:
+        form = NotificationSettingsForm(initial=initial_data)
+    
+    return render(request, 'client/profile/notifications.html', {
+        'form': form,
+        'title': 'Ustawienia powiadomień'
+    })
+
+
+@login_required
+def profile_delete_account(request):
+    """Usunięcie konta"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    if request.method == 'POST':
+        confirmation = request.POST.get('confirmation', '')
+        password = request.POST.get('password', '')
+        
+        if confirmation.lower() != 'usuń konto':
+            messages.error(request, 'Wprowadź poprawnie "usuń konto" aby potwierdzić.')
+            return render(request, 'client/profile/delete_account.html')
+        
+        # Sprawdź hasło
+        if not request.user.check_password(password):
+            messages.error(request, 'Nieprawidłowe hasło.')
+            return render(request, 'client/profile/delete_account.html')
+        
+        # Dezaktywuj konto (soft delete)
+        user = request.user
+        user.is_active = False
+        user.save()
+        
+        # Wyloguj użytkownika
+        logout(request)
+        
+        messages.success(request, 'Konto zostało usunięte. Dziękujemy za korzystanie z naszych usług.')
+        return redirect('home_page')
+    
+    return render(request, 'client/profile/delete_account.html', {
+        'title': 'Usuń konto'
+    })
 
 
 # ==========================================
