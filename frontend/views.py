@@ -829,7 +829,7 @@ def browse_diet_plans(request):
         'total_count': len(enriched_plans),
     }
     
-    return render(request, 'client/browse_plans.html', context)
+    return render(request, 'plans/browse.html', context)
 
 
 def diet_plan_detail(request, pk):
@@ -916,7 +916,7 @@ def diet_plan_detail(request, pk):
         'similar_plans': similar_plans,
     }
     
-    return render(request, 'client/plan_detail.html', context)
+    return render(request, 'plans/detail.html', context)
 
 
 def compare_diet_plans(request):
@@ -982,7 +982,7 @@ def compare_diet_plans(request):
         'plan_count': len(comparison_data),
     }
     
-    return render(request, 'client/compare_plans.html', context)
+    return render(request, 'plans/compare.html', context)
 
 
 @require_GET
