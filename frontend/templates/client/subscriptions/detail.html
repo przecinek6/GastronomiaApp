@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Szczegóły subskrypcji{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{% url 'subscription_list' %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do listy subskrypcji
+            </a>
+        </div>
+
+        <!-- Subscription Header -->
+        <div class="bg-gradient-to-r from-green-500 to-blue-600 rounded-3xl p-8 mb-8 text-white">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">{{ subscription.diet_plan.name }}</h1>
+                    <p class="text-green-100 mb-4">{{ subscription.diet_plan.description|truncatewords:20 }}</p>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        {% if subscription.status == 'active' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white">
+                                <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i>
+                                Aktywna
+                            </span>
+                        {% elif subscription.status == 'paused' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-100">
+                                <i data-lucide="pause-circle" class="w-4 h-4 mr-1"></i>
+                                Wstrzymana
+                            </span>
+                        {% elif subscription.status == 'cancelled' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-500/20 text-red-100">
+                                <i data-lucide="x-circle" class="w-4 h-4 mr-1"></i>
+                                Anulowana
+                            </span>
+                        {% endif %}
+                        <span class="text-sm opacity-90">
+                            ID: {{ subscription.id|truncatechars:12 }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 lg:mt-0 text-left lg:text-right">
+                    <div class="text-3xl font-bold">{{ subscription.total_amount }} zł</div>
+                    <div class="text-sm opacity-90">{{ subscription.get_duration_display }}</div>
+                    <div class="text-sm opacity-75 mt-2">
+                        {{ subscription.start_date|date:"d.m.Y" }} - {{ subscription.end_date|date:"d.m.Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        {% if subscription.status == 'active' %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Szybkie akcje</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {% if subscription.can_change_diet %}
+                        <a href="{% url 'diet_change' subscription.id %}" 
+                           class="flex items-center justify-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                            <i data-lucide="repeat" class="w-5 h-5 text-purple-600 mr-2"></i>
+                            <span class="font-medium text-purple-800">Zmień dietę</span>
+                        </a>
+                    {% else %}
+                        <div class="flex items-center justify-center p-4 bg-gray-50 rounded-lg cursor-not-allowed opacity-50">
+                            <i data-lucide="repeat" class="w-5 h-5 text-gray-400 mr-2"></i>
+                            <span class="font-medium text-gray-600">Limit zmian wyczerpany</span>
+                        </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'subscription_pause' subscription.id %}" 
+                       class="flex items-center justify-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+                        <i data-lucide="pause" class="w-5 h-5 text-yellow-600 mr-2"></i>
+                        <span class="font-medium text-yellow-800">Wstrzymaj</span>
+                    </a>
+                    
+                    <a href="{% url 'delivery_tracking' subscription.id %}" 
+                       class="flex items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                        <i data-lucide="truck" class="w-5 h-5 text-blue-600 mr-2"></i>
+                        <span class="font-medium text-blue-800">Śledź dostawy</span>
+                    </a>
+                    
+                    <a href="{% url 'subscription_cancel' subscription.id %}" 
+                       class="flex items-center justify-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                        <i data-lucide="x-circle" class="w-5 h-5 text-red-600 mr-2"></i>
+                        <span class="font-medium text-red-800">Anuluj</span>
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Subscription Details -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800">Szczegóły subskrypcji</h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Typ subskrypcji</p>
+                                <p class="font-medium">{{ subscription.get_duration_display }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Status</p>
+                                <p class="font-medium">{{ subscription.get_status_display }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Data rozpoczęcia</p>
+                                <p class="font-medium">{{ subscription.start_date|date:"d.m.Y" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Data zakończenia</p>
+                                <p class="font-medium">{{ subscription.end_date|date:"d.m.Y" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Utworzono</p>
+                                <p class="font-medium">{{ subscription.created_at|date:"d.m.Y H:i" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Zmiany diety</p>
+                                <p class="font-medium">{{ subscription.diet_changes_count }}/2</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-4">
+                            <p class="text-sm text-gray-600 mb-2">Adres dostawy</p>
+                            <p class="font-medium">{{ subscription.delivery_address }}</p>
+                            {% if subscription.delivery_notes %}
+                                <p class="text-sm text-gray-600 mt-2">{{ subscription.delivery_notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diet Changes History -->
+                {% if diet_changes %}
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h2 class="text-xl font-bold text-gray-800">Historia zmian diety</h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                {% for change in diet_changes %}
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p class="font-medium text-gray-800">
+                                                    {{ change.old_plan.name }} → {{ change.new_plan.name }}
+                                                </p>
+                                                <p class="text-sm text-gray-600">
+                                                    Data zmiany: {{ change.change_date|date:"d.m.Y" }}
+                                                </p>
+                                            </div>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                                       {% if change.status == 'completed' %}bg-green-100 text-green-800
+                                                       {% elif change.status == 'confirmed' %}bg-blue-100 text-blue-800
+                                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ change.get_status_display }}
+                                            </span>
+                                        </div>
+                                        {% if change.reason %}
+                                            <p class="text-sm text-gray-600">Powód: {{ change.reason }}</p>
+                                        {% endif %}
+                                        {% if change.price_adjustment != 0 %}
+                                            <p class="text-sm font-medium mt-2 
+                                                      {% if change.price_adjustment > 0 %}text-red-600
+                                                      {% else %}text-green-600{% endif %}">
+                                                {% if change.price_adjustment > 0 %}Dopłata{% else %}Zwrot{% endif %}: 
+                                                {{ change.price_adjustment|floatformat:2 }} zł
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-8">
+                
+                <!-- Upcoming Deliveries -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-800">Nadchodzące dostawy</h3>
+                    </div>
+                    <div class="p-6">
+                        {% if upcoming_deliveries %}
+                            <div class="space-y-3">
+                                {% for delivery in upcoming_deliveries %}
+                                    <div class="bg-gray-50 rounded-lg p-3">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <p class="font-medium text-sm">{{ delivery.delivery_date|date:"D, d.m" }}</p>
+                                            <span class="text-xs px-2 py-1 rounded-full 
+                                                       {% if delivery.status == 'preparing' %}bg-yellow-100 text-yellow-800
+                                                       {% elif delivery.status == 'ready' %}bg-blue-100 text-blue-800
+                                                       {% endif %}">
+                                                {{ delivery.get_status_display }}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-gray-600">Dostawa: 7:00-9:00</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <a href="{% url 'delivery_tracking' subscription.id %}" 
+                               class="block text-center text-blue-600 hover:text-blue-700 text-sm mt-4">
+                                Zobacz wszystkie dostawy →
+                            </a>
+                        {% else %}
+                            <p class="text-gray-600 text-sm">Brak zaplanowanych dostaw</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Payment Info -->
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-blue-800 mb-4">Informacje o płatności</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Kwota:</span>
+                            <span class="font-medium text-blue-800">{{ subscription.total_amount }} zł</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Metoda:</span>
+                            <span class="font-medium text-blue-800">Karta kredytowa</span>
+                        </div>
+                        {% if subscription.stripe_subscription_id %}
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">ID Stripe:</span>
+                                <span class="font-medium text-blue-800 text-xs">{{ subscription.stripe_subscription_id|truncatechars:15 }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}

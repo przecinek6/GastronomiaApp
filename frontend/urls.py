@@ -16,6 +16,15 @@ urlpatterns = [
     path('plans/', views.browse_diet_plans, name='browse_diet_plans'),
     path('plans/<int:pk>/', views.diet_plan_detail, name='diet_plan_detail'),
     path('plans/compare/', views.compare_diet_plans, name='compare_diet_plans'),
+
+    # Moduł subskrypcji klienta
+    path('subscriptions/', views.subscription_list, name='subscription_list'),
+    path('subscriptions/<uuid:subscription_id>/', views.subscription_detail, name='subscription_detail'),
+    path('subscriptions/create/<int:plan_id>/', views.subscription_create, name='subscription_create'),
+    path('subscriptions/<uuid:subscription_id>/pause/', views.subscription_pause, name='subscription_pause'),
+    path('subscriptions/<uuid:subscription_id>/cancel/', views.subscription_cancel, name='subscription_cancel'),
+    path('subscriptions/<uuid:subscription_id>/change-diet/', views.diet_change, name='diet_change'),
+    path('subscriptions/<uuid:subscription_id>/deliveries/', views.delivery_tracking, name='delivery_tracking'),
     
     # Panel zarządzania
     path('manage/', views.manage_dashboard, name='manage_dashboard'),

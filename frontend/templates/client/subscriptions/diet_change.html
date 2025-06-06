@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% load dish_filters %}
+
+{% block title %}Zmiana planu dietetycznego{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{% url 'subscription_detail' subscription.id %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do subskrypcji
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Zmiana planu dietetycznego</h1>
+            <p class="text-xl text-gray-600">
+                Wybierz nowy plan, który lepiej odpowiada Twoim potrzebom
+            </p>
+        </div>
+
+        <!-- Current Plan Info -->
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-blue-800 mb-2">Obecny plan</h3>
+                    <p class="text-lg font-medium text-blue-700">{{ subscription.diet_plan.name }}</p>
+                    <p class="text-sm text-blue-600">{{ subscription.get_duration_display }} • {{ subscription.total_amount }} zł</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-blue-600 mb-1">Pozostało zmian w tym miesiącu:</p>
+                    <p class="text-2xl font-bold text-blue-800">{{ changes_remaining }}/2</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Available Plans -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">
+                    <i data-lucide="grid-3x3" class="w-5 h-5 inline mr-2 text-green-600"></i>
+                    Dostępne plany
+                </h2>
+                
+                <div class="space-y-4">
+                    {% for plan_data in available_plans %}
+                        <label class="relative cursor-pointer block">
+                            <input type="radio" 
+                                   name="new_diet_plan" 
+                                   value="{{ plan_data.plan.id }}" 
+                                   class="peer hidden"
+                                   data-daily-rate="{{ plan_data.daily_rate }}"
+                                   data-price-diff="{{ plan_data.price_difference }}">
+                            
+                            <div class="border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 peer-checked:border-green-500 peer-checked:bg-green-50 transition-all">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ plan_data.plan.name }}</h3>
+                                        <p class="text-sm text-gray-600 mb-3">{{ plan_data.plan.description|truncatewords:20 }}</p>
+                                        
+                                        <!-- Plan stats -->
+                                        <div class="flex flex-wrap gap-4 text-sm">
+                                            <div>
+                                                <span class="text-gray-500">Cena dzienna:</span>
+                                                <span class="font-medium">{{ plan_data.daily_rate|floatformat:2 }} zł</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-500">Tygodniowa:</span>
+                                                <span class="font-medium">{{ plan_data.plan.weekly_price }} zł</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ml-6 text-right">
+                                        {% if plan_data.price_difference > 0 %}
+                                            <div class="text-red-600">
+                                                <p class="text-sm">Dopłata</p>
+                                                <p class="text-2xl font-bold">+{{ plan_data.price_difference|floatformat:2 }} zł/dzień</p>
+                                            </div>
+                                        {% elif plan_data.price_difference < 0 %}
+                                            <div class="text-green-600">
+                                                <p class="text-sm">Zwrot</p>
+                                                <p class="text-2xl font-bold">{{ plan_data.price_difference|floatformat:2 }} zł/dzień</p>
+                                            </div>
+                                        {% else %}
+                                            <div class="text-gray-600">
+                                                <p class="text-sm">Bez zmian</p>
+                                                <p class="text-2xl font-bold">0 zł</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    {% endfor %}
+                </div>
+                
+                {% if form.new_diet_plan.errors %}
+                    <div class="text-red-500 text-sm mt-2">{{ form.new_diet_plan.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Change Details -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">
+                    <i data-lucide="calendar" class="w-5 h-5 inline mr-2 text-blue-600"></i>
+                    Szczegóły zmiany
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.change_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Data zmiany *
+                        </label>
+                        {{ form.change_date }}
+                        {% if form.change_date.errors %}
+                            <div class="text-red-500 text-sm mt-1">{{ form.change_date.errors.0 }}</div>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">{{ form.change_date.help_text }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Efektywna data zmiany
+                        </label>
+                        <div class="px-4 py-3 bg-gray-100 rounded-lg">
+                            <p class="font-medium effective-date">-</p>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Najbliższy poniedziałek</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <label for="{{ form.reason.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ form.reason.label }}
+                    </label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.reason.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Cost Summary -->
+            <div class="bg-gradient-to-r from-gray-700 to-gray-900 rounded-2xl p-8 text-white mb-8">
+                <h2 class="text-xl font-bold mb-6">Podsumowanie kosztów</h2>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between">
+                        <span>Pozostałe dni subskrypcji:</span>
+                        <span class="font-medium days-remaining">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Różnica dzienna:</span>
+                        <span class="font-medium daily-difference">0.00 zł</span>
+                    </div>
+                    <hr class="border-gray-600">
+                    <div class="flex justify-between text-lg">
+                        <span class="font-semibold">Całkowita korekta:</span>
+                        <span class="text-2xl font-bold total-adjustment">0.00 zł</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-white/10 rounded-lg">
+                    <p class="text-sm opacity-90">
+                        <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                        Dopłata zostanie pobrana z Twojej karty. Zwrot zostanie przelany w ciągu 3-5 dni roboczych.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="text-center">
+                <button type="submit" 
+                        class="bg-gradient-to-r from-green-500 to-green-600 text-white px-12 py-4 rounded-full text-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="submit-button"
+                        disabled>
+                    <i data-lucide="check" class="w-5 h-5 inline mr-2"></i>
+                    Potwierdź zmianę planu
+                </button>
+                <p class="text-sm text-gray-500 mt-4">
+                    Zmiana planu jest nieodwracalna po potwierdzeniu
+                </p>
+            </div>
+            
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-sm text-center mt-4">
+                    {{ form.non_field_errors.0 }}
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    
+    const changeDateInput = document.getElementById('{{ form.change_date.id_for_label }}');
+    const effectiveDateDisplay = document.querySelector('.effective-date');
+    const daysRemainingDisplay = document.querySelector('.days-remaining');
+    const dailyDifferenceDisplay = document.querySelector('.daily-difference');
+    const totalAdjustmentDisplay = document.querySelector('.total-adjustment');
+    const submitButton = document.getElementById('submit-button');
+    const planRadios = document.querySelectorAll('input[name="new_diet_plan"]');
+    
+    const subscriptionEndDate = new Date('{{ subscription.end_date|date:"Y-m-d" }}');
+    let selectedPlanDiff = 0;
+    
+    function getNextMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = day === 0 ? 1 : (8 - day) % 7 || 7;
+        d.setDate(d.getDate() + diff);
+        return d;
+    }
+    
+    function updateCalculations() {
+        const changeDate = changeDateInput.value ? new Date(changeDateInput.value) : null;
+        const selectedPlan = document.querySelector('input[name="new_diet_plan"]:checked');
+        
+        if (changeDate && selectedPlan) {
+            // Calculate effective date (next Monday)
+            const effectiveDate = getNextMonday(changeDate);
+            effectiveDateDisplay.textContent = effectiveDate.toLocaleDateString('pl-PL');
+            
+            // Calculate days remaining
+            const daysRemaining = Math.max(0, Math.ceil((subscriptionEndDate - effectiveDate) / (1000 * 60 * 60 * 24)));
+            daysRemainingDisplay.textContent = daysRemaining + ' dni';
+            
+            // Get price difference
+            const priceDiff = parseFloat(selectedPlan.dataset.priceDiff);
+            selectedPlanDiff = priceDiff;
+            
+            // Update displays
+            if (priceDiff > 0) {
+                dailyDifferenceDisplay.textContent = '+' + priceDiff.toFixed(2) + ' zł';
+                dailyDifferenceDisplay.classList.add('text-red-400');
+                dailyDifferenceDisplay.classList.remove('text-green-400');
+            } else if (priceDiff < 0) {
+                dailyDifferenceDisplay.textContent = priceDiff.toFixed(2) + ' zł';
+                dailyDifferenceDisplay.classList.add('text-green-400');
+                dailyDifferenceDisplay.classList.remove('text-red-400');
+            } else {
+                dailyDifferenceDisplay.textContent = '0.00 zł';
+                dailyDifferenceDisplay.classList.remove('text-red-400', 'text-green-400');
+            }
+            
+            // Calculate total adjustment
+            const totalAdjustment = priceDiff * daysRemaining;
+            if (totalAdjustment > 0) {
+                totalAdjustmentDisplay.textContent = '+' + totalAdjustment.toFixed(2) + ' zł';
+                totalAdjustmentDisplay.classList.add('text-red-400');
+                totalAdjustmentDisplay.classList.remove('text-green-400');
+            } else if (totalAdjustment < 0) {
+                totalAdjustmentDisplay.textContent = totalAdjustment.toFixed(2) + ' zł';
+                totalAdjustmentDisplay.classList.add('text-green-400');
+                totalAdjustmentDisplay.classList.remove('text-red-400');
+            } else {
+                totalAdjustmentDisplay.textContent = '0.00 zł';
+                totalAdjustmentDisplay.classList.remove('text-red-400', 'text-green-400');
+            }
+            
+            // Enable submit button
+            submitButton.disabled = false;
+        } else {
+            // Reset displays
+            effectiveDateDisplay.textContent = '-';
+            daysRemainingDisplay.textContent = '-';
+            dailyDifferenceDisplay.textContent = '0.00 zł';
+            totalAdjustmentDisplay.textContent = '0.00 zł';
+            submitButton.disabled = true;
+        }
+    }
+    
+    // Event listeners
+    changeDateInput.addEventListener('change', updateCalculations);
+    planRadios.forEach(radio => {
+        radio.addEventListener('change', updateCalculations);
+    });
+    
+    // Confirm before submit
+    document.getElementById('diet-plan-form').addEventListener('submit', function(e) {
+        const selectedPlan = document.querySelector('input[name="new_diet_plan"]:checked');
+        if (!selectedPlan) {
+            e.preventDefault();
+            alert('Wybierz nowy plan dietetyczny.');
+            return false;
+        }
+        
+        if (!confirm('Czy na pewno chcesz zmienić plan dietetyczny? Ta operacja jest nieodwracalna.')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock content %}

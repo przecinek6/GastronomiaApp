@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Moje subskrypcje{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Moje subskrypcje</h1>
+                <p class="text-gray-600">Zarządzaj swoimi planami dietetycznymi</p>
+            </div>
+            <a href="{% url 'browse_diet_plans' %}" 
+               class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                <i data-lucide="plus" class="w-5 h-5 inline mr-2"></i>
+                Nowa subskrypcja
+            </a>
+        </div>
+
+        <!-- Active Subscriptions -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Aktywne subskrypcje</h2>
+            
+            {% if active_subscriptions %}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {% for subscription in active_subscriptions %}
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-200">
+                            <div class="p-6">
+                                <!-- Header -->
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800">{{ subscription.diet_plan.name }}</h3>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            {% if subscription.status == 'active' %}
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                                    Aktywna
+                                                </span>
+                                            {% elif subscription.status == 'paused' %}
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    <i data-lucide="pause-circle" class="w-3 h-3 mr-1"></i>
+                                                    Wstrzymana
+                                                </span>
+                                            {% endif %}
+                                            <span class="text-sm text-gray-500">
+                                                {{ subscription.get_duration_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-gray-800">{{ subscription.total_amount }} zł</div>
+                                        <div class="text-sm text-gray-500">za {{ subscription.get_duration_display|lower }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Details -->
+                                <div class="space-y-3 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600">Rozpoczęcie:</span>
+                                        <span class="font-medium">{{ subscription.start_date|date:"d.m.Y" }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600">Zakończenie:</span>
+                                        <span class="font-medium">{{ subscription.end_date|date:"d.m.Y" }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600">Następna dostawa:</span>
+                                        <span class="font-medium text-green-600">Jutro, 7:00-9:00</span>
+                                    </div>
+                                    {% if subscription.diet_changes_count > 0 %}
+                                        <div class="flex justify-between text-sm">
+                                            <span class="text-gray-600">Zmiany diety:</span>
+                                            <span class="font-medium">{{ subscription.diet_changes_count }}/2</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{% url 'subscription_detail' subscription.id %}" 
+                                       class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors text-center">
+                                        <i data-lucide="eye" class="w-4 h-4 inline mr-1"></i>
+                                        Szczegóły
+                                    </a>
+                                    {% if subscription.status == 'active' %}
+                                        {% if subscription.can_change_diet %}
+                                            <a href="{% url 'diet_change' subscription.id %}" 
+                                               class="flex-1 bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600 transition-colors text-center">
+                                                <i data-lucide="repeat" class="w-4 h-4 inline mr-1"></i>
+                                                Zmień dietę
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'subscription_pause' subscription.id %}" 
+                                           class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-yellow-600 transition-colors">
+                                            <i data-lucide="pause" class="w-4 h-4"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+                    <i data-lucide="calendar-x" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-medium text-gray-800 mb-2">Brak aktywnych subskrypcji</h3>
+                    <p class="text-gray-600 mb-6">Rozpocznij swoją przygodę ze zdrowym odżywianiem</p>
+                    <a href="{% url 'browse_diet_plans' %}" 
+                       class="inline-flex items-center bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                        <i data-lucide="search" class="w-4 h-4 mr-2"></i>
+                        Przeglądaj plany dietetyczne
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Historical Subscriptions -->
+        {% if historical_subscriptions %}
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Historia subskrypcji</h2>
+                
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Plan</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Okres</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Status</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Kwota</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                {% for subscription in historical_subscriptions %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4">
+                                            <div class="font-medium text-gray-800">{{ subscription.diet_plan.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ subscription.get_duration_display }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-center text-sm">
+                                            {{ subscription.start_date|date:"d.m.Y" }} - {{ subscription.end_date|date:"d.m.Y" }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            {% if subscription.status == 'completed' %}
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                    <i data-lucide="check" class="w-3 h-3 mr-1"></i>
+                                                    Zakończona
+                                                </span>
+                                            {% elif subscription.status == 'cancelled' %}
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    <i data-lucide="x" class="w-3 h-3 mr-1"></i>
+                                                    Anulowana
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 text-center font-medium">
+                                            {{ subscription.total_amount }} zł
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <a href="{% url 'subscription_detail' subscription.id %}" 
+                                               class="text-blue-600 hover:text-blue-700">
+                                                Zobacz szczegóły
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Back Link -->
+        <div class="mt-8">
+            <a href="{% url 'client_dashboard' %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do dashboardu
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}

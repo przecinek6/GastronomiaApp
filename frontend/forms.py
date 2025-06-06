@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.core.exceptions import ValidationError
-from datetime import date
+from datetime import date, timedelta
 from frontend.models import Ingredient, Dish, DietPlan
 
 User = get_user_model()
@@ -523,3 +523,167 @@ class NotificationSettingsForm(forms.Form):
             'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
         })
     )
+
+# Dodaj na końcu pliku frontend/forms.py
+
+class SubscriptionForm(forms.Form):
+    """Formularz do tworzenia nowej subskrypcji"""
+    diet_plan = forms.ModelChoiceField(
+        queryset=DietPlan.objects.filter(is_active=True),
+        widget=forms.HiddenInput()
+    )
+    
+    duration = forms.ChoiceField(
+        choices=[
+            ('week', '1 tydzień'),
+            ('month', '1 miesiąc'),
+            ('year', '1 rok')
+        ],
+        widget=forms.RadioSelect(attrs={
+            'class': 'w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500'
+        })
+    )
+    
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'type': 'date',
+            'min': date.today().isoformat()
+        })
+    )
+    
+    delivery_address = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Pełny adres dostawy',
+            'rows': 3
+        })
+    )
+    
+    delivery_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Kod bramy, piętro, uwagi dla kuriera...',
+            'rows': 3
+        })
+    )
+    
+    terms_accepted = forms.BooleanField(
+        required=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Jeśli użytkownik ma zapisany adres, użyj go jako domyślny
+        if user and hasattr(user, 'userprofile'):
+            profile = user.userprofile
+            if profile.full_delivery_address != "Brak adresu dostawy":
+                self.fields['delivery_address'].initial = profile.full_delivery_address
+                self.fields['delivery_notes'].initial = profile.delivery_notes
+    
+    def clean_start_date(self):
+        start_date = self.cleaned_data.get('start_date')
+        if start_date < date.today():
+            raise ValidationError('Data rozpoczęcia nie może być w przeszłości.')
+        # Minimalnie 2 dni na przygotowanie
+        if start_date < date.today() + timedelta(days=2):
+            raise ValidationError('Potrzebujemy minimum 2 dni na przygotowanie pierwszej dostawy.')
+        return start_date
+
+
+class PauseSubscriptionForm(forms.Form):
+    """Formularz do pauzowania subskrypcji"""
+    pause_start_date = forms.DateField(
+        label='Data rozpoczęcia pauzy',
+        widget=forms.DateInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'type': 'date',
+            'min': date.today().isoformat()
+        })
+    )
+    
+    pause_end_date = forms.DateField(
+        label='Data zakończenia pauzy',
+        widget=forms.DateInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'type': 'date'
+        })
+    )
+    
+    pause_reason = forms.CharField(
+        label='Powód pauzy',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Opcjonalnie podaj powód (wakacje, wyjazd służbowy, itp.)',
+            'rows': 3
+        })
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        pause_start = cleaned_data.get('pause_start_date')
+        pause_end = cleaned_data.get('pause_end_date')
+        
+        if pause_start and pause_end:
+            if pause_end <= pause_start:
+                raise ValidationError('Data zakończenia pauzy musi być późniejsza niż data rozpoczęcia.')
+            
+            # Maksymalnie 30 dni pauzy
+            if (pause_end - pause_start).days > 30:
+                raise ValidationError('Maksymalny czas pauzy to 30 dni.')
+        
+        return cleaned_data
+
+
+class ChangeDietForm(forms.Form):
+    """Formularz do zmiany planu dietetycznego"""
+    new_diet_plan = forms.ModelChoiceField(
+        queryset=DietPlan.objects.filter(is_active=True),
+        label='Nowy plan dietetyczny',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors'
+        })
+    )
+    
+    change_date = forms.DateField(
+        label='Data zmiany',
+        help_text='Zmiana wejdzie w życie od najbliższego poniedziałku po tej dacie',
+        widget=forms.DateInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
+            'type': 'date',
+            'min': date.today().isoformat()
+        })
+    )
+    
+    reason = forms.CharField(
+        label='Powód zmiany',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none',
+            'placeholder': 'Opcjonalnie podaj powód zmiany diety',
+            'rows': 3
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        self.current_subscription = kwargs.pop('subscription', None)
+        super().__init__(*args, **kwargs)
+        
+        # Wyklucz obecny plan z listy
+        if self.current_subscription:
+            self.fields['new_diet_plan'].queryset = DietPlan.objects.filter(
+                is_active=True
+            ).exclude(id=self.current_subscription.diet_plan.id)
+    
+    def clean_change_date(self):
+        change_date = self.cleaned_data.get('change_date')
+        if change_date < date.today() + timedelta(days=3):
+            raise ValidationError('Potrzebujemy minimum 3 dni na przygotowanie zmiany.')
+        return change_date

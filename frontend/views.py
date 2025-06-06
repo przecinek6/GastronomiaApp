@@ -1237,3 +1237,378 @@ def ingredients_list_api(request):
         })
     
     return JsonResponse({'ingredients': data})
+
+# Dodaj importy na początku pliku
+from datetime import date, timedelta
+from decimal import Decimal
+from django.urls import reverse
+from frontend.models import Subscription, DietChange, Payment, Delivery
+from frontend.forms import SubscriptionForm, PauseSubscriptionForm, ChangeDietForm
+
+# Dodaj te widoki na końcu pliku
+
+# ==========================================
+# MODUŁ ZAMÓWIEŃ I SUBSKRYPCJI
+# ==========================================
+
+@login_required
+def subscription_list(request):
+    """Lista subskrypcji klienta"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Pobierz subskrypcje użytkownika
+    subscriptions = Subscription.objects.filter(
+        client=request.user
+    ).select_related('diet_plan').order_by('-created_at')
+    
+    # Podziel na aktywne i historyczne
+    active_subscriptions = []
+    historical_subscriptions = []
+    
+    for sub in subscriptions:
+        if sub.status in ['active', 'paused']:
+            active_subscriptions.append(sub)
+        else:
+            historical_subscriptions.append(sub)
+    
+    context = {
+        'active_subscriptions': active_subscriptions,
+        'historical_subscriptions': historical_subscriptions,
+    }
+    
+    return render(request, 'client/subscriptions/list.html', context)
+
+
+@login_required
+def subscription_detail(request, subscription_id):
+    """Szczegóły subskrypcji"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    subscription = get_object_or_404(
+        Subscription, 
+        id=subscription_id, 
+        client=request.user
+    )
+    
+    # Pobierz historię zmian diety
+    diet_changes = DietChange.objects.filter(
+        subscription=subscription
+    ).order_by('-created_at')
+    
+    # Pobierz nadchodzące dostawy
+    upcoming_deliveries = Delivery.objects.filter(
+        subscription=subscription,
+        delivery_date__gte=date.today(),
+        status__in=['preparing', 'ready']
+    ).order_by('delivery_date')[:5]
+    
+    # Pobierz ostatnie dostawy
+    recent_deliveries = Delivery.objects.filter(
+        subscription=subscription,
+        status='delivered'
+    ).order_by('-delivery_date')[:5]
+    
+    context = {
+        'subscription': subscription,
+        'diet_changes': diet_changes,
+        'upcoming_deliveries': upcoming_deliveries,
+        'recent_deliveries': recent_deliveries,
+    }
+    
+    return render(request, 'client/subscriptions/detail.html', context)
+
+
+@login_required
+def subscription_create(request, plan_id):
+    """Tworzenie nowej subskrypcji"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    diet_plan = get_object_or_404(DietPlan, id=plan_id, is_active=True)
+    
+    if request.method == 'POST':
+        form = SubscriptionForm(request.POST, user=request.user)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Oblicz daty i cenę
+                    duration = form.cleaned_data['duration']
+                    start_date = form.cleaned_data['start_date']
+                    
+                    if duration == 'week':
+                        end_date = start_date + timedelta(days=7)
+                        total_amount = diet_plan.weekly_price
+                    elif duration == 'month':
+                        end_date = start_date + timedelta(days=30)
+                        total_amount = diet_plan.monthly_price
+                    else:  # year
+                        end_date = start_date + timedelta(days=365)
+                        total_amount = diet_plan.yearly_price
+                    
+                    # Twórz subskrypcję
+                    subscription = Subscription.objects.create(
+                        client=request.user,
+                        diet_plan=diet_plan,
+                        duration=duration,
+                        status='pending',
+                        start_date=start_date,
+                        end_date=end_date,
+                        total_amount=total_amount,
+                        delivery_address=form.cleaned_data['delivery_address'],
+                        delivery_notes=form.cleaned_data['delivery_notes']
+                    )
+                    
+                    # TODO: Integracja z Stripe dla płatności
+                    # Na razie symuluj płatność
+                    subscription.status = 'active'
+                    subscription.save()
+                    
+                    # Dodaj punkty lojalnościowe (1 punkt = 1 zł)
+                    try:
+                        loyalty_account = request.user.loyaltyaccount
+                        loyalty_account.add_points(
+                            points=int(total_amount),
+                            transaction_type='purchase',
+                            description=f'Zakup subskrypcji: {diet_plan.name} ({duration})',
+                            related_order=subscription
+                        )
+                    except:
+                        pass
+                    
+                    messages.success(request, 'Subskrypcja została utworzona pomyślnie!')
+                    return redirect('subscription_detail', subscription_id=subscription.id)
+                    
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas tworzenia subskrypcji: {str(e)}')
+    else:
+        # Ustaw domyślną datę rozpoczęcia (najbliższy poniedziałek)
+        today = date.today()
+        days_until_monday = (7 - today.weekday()) % 7
+        if days_until_monday < 2:  # Jeśli to weekend, weź następny poniedziałek
+            days_until_monday += 7
+        default_start_date = today + timedelta(days=days_until_monday)
+        
+        form = SubscriptionForm(
+            initial={'diet_plan': diet_plan, 'start_date': default_start_date},
+            user=request.user
+        )
+    
+    context = {
+        'form': form,
+        'diet_plan': diet_plan,
+    }
+    
+    return render(request, 'client/subscriptions/create.html', context)
+
+
+@login_required
+def subscription_pause(request, subscription_id):
+    """Pauzowanie subskrypcji"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    subscription = get_object_or_404(
+        Subscription, 
+        id=subscription_id, 
+        client=request.user,
+        status='active'
+    )
+    
+    if request.method == 'POST':
+        form = PauseSubscriptionForm(request.POST)
+        if form.is_valid():
+            # TODO: Implementacja pauzowania
+            messages.info(request, 'Funkcja pauzowania będzie dostępna wkrótce.')
+            return redirect('subscription_detail', subscription_id=subscription.id)
+    else:
+        form = PauseSubscriptionForm()
+    
+    context = {
+        'form': form,
+        'subscription': subscription,
+    }
+    
+    return render(request, 'client/subscriptions/pause.html', context)
+
+
+@login_required
+def subscription_cancel(request, subscription_id):
+    """Anulowanie subskrypcji"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    subscription = get_object_or_404(
+        Subscription, 
+        id=subscription_id, 
+        client=request.user,
+        status__in=['active', 'paused']
+    )
+    
+    if request.method == 'POST':
+        # TODO: Oblicz zwrot proporcjonalny
+        subscription.status = 'cancelled'
+        subscription.save()
+        
+        messages.success(request, 'Subskrypcja została anulowana.')
+        return redirect('subscription_list')
+    
+    # Oblicz potencjalny zwrot
+    days_used = (date.today() - subscription.start_date).days
+    total_days = (subscription.end_date - subscription.start_date).days
+    days_remaining = max(0, total_days - days_used)
+    refund_amount = (subscription.total_amount / total_days) * days_remaining
+    
+    context = {
+        'subscription': subscription,
+        'days_remaining': days_remaining,
+        'refund_amount': round(refund_amount, 2),
+    }
+    
+    return render(request, 'client/subscriptions/cancel.html', context)
+
+
+@login_required
+def diet_change(request, subscription_id):
+    """Zmiana planu dietetycznego"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    subscription = get_object_or_404(
+        Subscription, 
+        id=subscription_id, 
+        client=request.user,
+        status='active'
+    )
+    
+    # Sprawdź czy można zmienić dietę
+    if not subscription.can_change_diet():
+        messages.error(request, 'Osiągnięto limit zmian diety w tym miesiącu (max. 2).')
+        return redirect('subscription_detail', subscription_id=subscription.id)
+    
+    if request.method == 'POST':
+        form = ChangeDietForm(request.POST, subscription=subscription)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    new_plan = form.cleaned_data['new_diet_plan']
+                    change_date = form.cleaned_data['change_date']
+                    
+                    # Znajdź najbliższy poniedziałek
+                    days_until_monday = (7 - change_date.weekday()) % 7
+                    if days_until_monday == 0:  # Jeśli to już poniedziałek
+                        effective_date = change_date
+                    else:
+                        effective_date = change_date + timedelta(days=days_until_monday)
+                    
+                    # Oblicz korektę ceny
+                    days_remaining = (subscription.end_date - effective_date).days
+                    total_days = (subscription.end_date - subscription.start_date).days
+                    
+                    # Proporcjonalny koszt starej i nowej diety
+                    old_daily_rate = subscription.total_amount / total_days
+                    new_daily_rate = self._calculate_daily_rate(new_plan, subscription.duration)
+                    
+                    price_adjustment = (new_daily_rate - old_daily_rate) * days_remaining
+                    
+                    # Utwórz rekord zmiany
+                    diet_change = DietChange.objects.create(
+                        subscription=subscription,
+                        old_plan=subscription.diet_plan,
+                        new_plan=new_plan,
+                        change_date=effective_date,
+                        reason=form.cleaned_data.get('reason', ''),
+                        price_adjustment=price_adjustment,
+                        status='pending'
+                    )
+                    
+                    # Zaktualizuj subskrypcję
+                    subscription.diet_plan = new_plan
+                    subscription.diet_changes_count += 1
+                    subscription.save()
+                    
+                    # Oznacz zmianę jako potwierdzoną
+                    diet_change.status = 'confirmed'
+                    diet_change.save()
+                    
+                    messages.success(request, f'Zmiana diety została zaplanowana na {effective_date.strftime("%d.%m.%Y")}.')
+                    
+                    # Jeśli dopłata, przekieruj do płatności
+                    if price_adjustment > 0:
+                        messages.info(request, f'Do dopłaty: {price_adjustment:.2f} zł')
+                        # TODO: Przekieruj do płatności
+                    elif price_adjustment < 0:
+                        messages.info(request, f'Zwrot: {abs(price_adjustment):.2f} zł zostanie przelany na Twoje konto.')
+                    
+                    return redirect('subscription_detail', subscription_id=subscription.id)
+                    
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas zmiany diety: {str(e)}')
+    else:
+        form = ChangeDietForm(subscription=subscription)
+    
+    # Pobierz dostępne plany z cenami
+    available_plans = []
+    for plan in form.fields['new_diet_plan'].queryset:
+        daily_rate = self._calculate_daily_rate(plan, subscription.duration)
+        current_daily_rate = subscription.total_amount / (subscription.end_date - subscription.start_date).days
+        price_diff = daily_rate - current_daily_rate
+        
+        available_plans.append({
+            'plan': plan,
+            'daily_rate': daily_rate,
+            'price_difference': price_diff,
+        })
+    
+    context = {
+        'form': form,
+        'subscription': subscription,
+        'available_plans': available_plans,
+        'changes_remaining': 2 - subscription.diet_changes_count,
+    }
+    
+    return render(request, 'client/subscriptions/diet_change.html', context)
+
+
+def _calculate_daily_rate(diet_plan, duration):
+    """Helper do obliczania dziennej stawki"""
+    if duration == 'week':
+        return float(diet_plan.weekly_price) / 7
+    elif duration == 'month':
+        return float(diet_plan.monthly_price) / 30
+    else:  # year
+        return float(diet_plan.yearly_price) / 365
+
+
+@login_required
+def delivery_tracking(request, subscription_id):
+    """Śledzenie dostaw"""
+    if not user_is_client(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    subscription = get_object_or_404(
+        Subscription, 
+        id=subscription_id, 
+        client=request.user
+    )
+    
+    # Pobierz dostawy z ostatnich 30 dni
+    deliveries = Delivery.objects.filter(
+        subscription=subscription,
+        delivery_date__gte=date.today() - timedelta(days=30)
+    ).order_by('-delivery_date')
+    
+    context = {
+        'subscription': subscription,
+        'deliveries': deliveries,
+    }
+    
+    return render(request, 'client/subscriptions/delivery_tracking.html', context)

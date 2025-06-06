@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Nowa subskrypcja - {{ diet_plan.name }}{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{% url 'diet_plan_detail' diet_plan.pk %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do planu
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Zamów plan {{ diet_plan.name }}</h1>
+            <p class="text-xl text-gray-600">
+                Wypełnij formularz, aby rozpocząć swoją przygodę ze zdrowym odżywianiem
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.diet_plan }}
+            
+            <div class="space-y-8">
+                
+                <!-- Plan Summary -->
+                <div class="bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl p-6 text-white">
+                    <h2 class="text-xl font-bold mb-4">Wybrany plan</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">{{ diet_plan.name }}</h3>
+                            <p class="text-green-100">{{ diet_plan.description|truncatewords:20 }}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm opacity-90 mb-2">Ceny:</div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between">
+                                    <span>Tydzień:</span>
+                                    <span class="font-bold">{{ diet_plan.weekly_price }} zł</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Miesiąc:</span>
+                                    <span class="font-bold">{{ diet_plan.monthly_price }} zł</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Rok:</span>
+                                    <span class="font-bold">{{ diet_plan.yearly_price }} zł</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duration Selection -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">
+                        <i data-lucide="calendar" class="w-5 h-5 inline mr-2 text-green-600"></i>
+                        Wybierz okres subskrypcji
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="duration" value="week" class="peer hidden" {% if form.duration.value == 'week' %}checked{% endif %}>
+                            <div class="border-2 border-gray-200 rounded-lg p-6 text-center hover:border-green-500 peer-checked:border-green-500 peer-checked:bg-green-50 transition-all">
+                                <div class="text-2xl font-bold text-gray-800 mb-1">{{ diet_plan.weekly_price }} zł</div>
+                                <div class="text-sm text-gray-600">Tydzień</div>
+                                <div class="text-xs text-gray-500 mt-2">Idealny na próbę</div>
+                            </div>
+                        </label>
+                        
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="duration" value="month" class="peer hidden" {% if form.duration.value == 'month' or not form.duration.value %}checked{% endif %}>
+                            <div class="border-2 border-gray-200 rounded-lg p-6 text-center hover:border-green-500 peer-checked:border-green-500 peer-checked:bg-green-50 transition-all">
+                                <div class="text-2xl font-bold text-gray-800 mb-1">{{ diet_plan.monthly_price }} zł</div>
+                                <div class="text-sm text-gray-600">Miesiąc</div>
+                                <div class="text-xs text-green-600 font-medium mt-2">Najpopularniejszy</div>
+                            </div>
+                        </label>
+                        
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="duration" value="year" class="peer hidden" {% if form.duration.value == 'year' %}checked{% endif %}>
+                            <div class="border-2 border-gray-200 rounded-lg p-6 text-center hover:border-green-500 peer-checked:border-green-500 peer-checked:bg-green-50 transition-all">
+                                <div class="text-2xl font-bold text-gray-800 mb-1">{{ diet_plan.yearly_price }} zł</div>
+                                <div class="text-sm text-gray-600">Rok</div>
+                                <div class="text-xs text-purple-600 font-medium mt-2">Oszczędź 20%</div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    {% if form.duration.errors %}
+                        <div class="text-red-500 text-sm mt-2">{{ form.duration.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Start Date -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">
+                        <i data-lucide="clock" class="w-5 h-5 inline mr-2 text-blue-600"></i>
+                        Data rozpoczęcia
+                    </h2>
+                    
+                    <div class="max-w-md">
+                        <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Kiedy chcesz rozpocząć otrzymywanie posiłków?
+                        </label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                            <div class="text-red-500 text-sm mt-1">{{ form.start_date.errors.0 }}</div>
+                        {% endif %}
+                        <p class="text-sm text-gray-500 mt-2">
+                            <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                            Potrzebujemy minimum 2 dni na przygotowanie pierwszej dostawy
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Delivery Address -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">
+                        <i data-lucide="map-pin" class="w-5 h-5 inline mr-2 text-purple-600"></i>
+                        Adres dostawy
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.delivery_address.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Adres dostawy *
+                            </label>
+                            {{ form.delivery_address }}
+                            {% if form.delivery_address.errors %}
+                                <div class="text-red-500 text-sm mt-1">{{ form.delivery_address.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.delivery_notes.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Instrukcje dla kuriera (opcjonalnie)
+                            </label>
+                            {{ form.delivery_notes }}
+                            {% if form.delivery_notes.errors %}
+                                <div class="text-red-500 text-sm mt-1">{{ form.delivery_notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                        <h4 class="font-semibold text-blue-800 mb-2">Godziny dostaw</h4>
+                        <ul class="text-sm text-blue-700 space-y-1">
+                            <li>• Poniedziałek - Piątek: 7:00 - 18:00</li>
+                            <li>• Sobota: 8:00 - 15:00</li>
+                            <li>• Niedziela: dostawy tylko w wybranych lokalizacjach</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Terms and Summary -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">
+                        <i data-lucide="shield-check" class="w-5 h-5 inline mr-2 text-green-600"></i>
+                        Podsumowanie i regulamin
+                    </h2>
+                    
+                    <!-- Order Summary -->
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h3 class="font-semibold text-gray-800 mb-4">Podsumowanie zamówienia</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Plan dietetyczny:</span>
+                                <span class="font-medium">{{ diet_plan.name }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Okres subskrypcji:</span>
+                                <span class="font-medium duration-display">1 miesiąc</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Data rozpoczęcia:</span>
+                                <span class="font-medium start-date-display">-</span>
+                            </div>
+                            <hr class="my-3">
+                            <div class="flex justify-between text-lg">
+                                <span class="font-semibold">Do zapłaty:</span>
+                                <span class="font-bold text-green-600 total-amount">{{ diet_plan.monthly_price }} zł</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms -->
+                    <div class="flex items-start">
+                        {{ form.terms_accepted }}
+                        <label for="{{ form.terms_accepted.id_for_label }}" class="ml-2 text-sm text-gray-600">
+                            Akceptuję <a href="#" class="text-green-600 hover:text-green-700 underline">regulamin</a> 
+                            oraz <a href="#" class="text-green-600 hover:text-green-700 underline">politykę prywatności</a>. 
+                            Rozumiem, że subskrypcja odnawia się automatycznie.
+                        </label>
+                    </div>
+                    {% if form.terms_accepted.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.terms_accepted.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" 
+                            class="bg-gradient-to-r from-green-500 to-green-600 text-white px-12 py-4 rounded-full text-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <i data-lucide="credit-card" class="w-5 h-5 inline mr-2"></i>
+                        Przejdź do płatności
+                    </button>
+                    <p class="text-sm text-gray-500 mt-4">
+                        <i data-lucide="lock" class="w-4 h-4 inline mr-1"></i>
+                        Bezpieczna płatność obsługiwana przez Stripe
+                    </p>
+                </div>
+                
+                <!-- Non-field errors -->
+                {% if form.non_field_errors %}
+                    <div class="text-red-500 text-sm text-center">
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+        </form>
+
+        <!-- Benefits -->
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-green-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">Gwarancja jakości</h3>
+                <p class="text-sm text-gray-600">100% satysfakcji lub zwrot pieniędzy</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="truck" class="w-6 h-6 text-blue-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">Darmowa dostawa</h3>
+                <p class="text-sm text-gray-600">Na terenie całego miasta</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="repeat" class="w-6 h-6 text-purple-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">Elastyczne zmiany</h3>
+                <p class="text-sm text-gray-600">Zmień plan do 2 razy w miesiącu</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    
+    // Update summary based on selection
+    const durationInputs = document.querySelectorAll('input[name="duration"]');
+    const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+    const durationDisplay = document.querySelector('.duration-display');
+    const startDateDisplay = document.querySelector('.start-date-display');
+    const totalAmountDisplay = document.querySelector('.total-amount');
+    
+    const prices = {
+        'week': {{ diet_plan.weekly_price }},
+        'month': {{ diet_plan.monthly_price }},
+        'year': {{ diet_plan.yearly_price }}
+    };
+    
+    const durationLabels = {
+        'week': '1 tydzień',
+        'month': '1 miesiąc',
+        'year': '1 rok'
+    };
+    
+    function updateSummary() {
+        const selectedDuration = document.querySelector('input[name="duration"]:checked').value;
+        durationDisplay.textContent = durationLabels[selectedDuration];
+        totalAmountDisplay.textContent = prices[selectedDuration] + ' zł';
+        
+        if (startDateInput.value) {
+            const date = new Date(startDateInput.value);
+            startDateDisplay.textContent = date.toLocaleDateString('pl-PL');
+        }
+    }
+    
+    durationInputs.forEach(input => {
+        input.addEventListener('change', updateSummary);
+    });
+    
+    startDateInput.addEventListener('change', updateSummary);
+    
+    // Initial update
+    updateSummary();
+});
+</script>
+{% endblock content %}

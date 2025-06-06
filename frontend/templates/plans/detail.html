@@ -61,9 +61,10 @@
                             <span class="text-lg font-bold text-purple-600">{{ plan.yearly_price }}zł</span>
                         </div>
                     </div>
-                    <button class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg mt-6 font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl opacity-50 cursor-not-allowed">
-                        Zamów plan (wkrótce)
-                    </button>
+                    <a href="{% url 'subscription_create' plan.pk %}" 
+                        class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg mt-6 font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl text-center block">
+                        Zamów plan
+                    </a>
                 </div>
             </div>
         </div>
