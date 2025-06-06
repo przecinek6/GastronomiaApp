@@ -758,7 +758,6 @@ def client_profile(request):
                     
                     # Aktualizuj dane UserProfile
                     profile.phone = request.POST.get('phone', '').strip()
-                    profile.address = request.POST.get('address', '').strip()
                     
                     # Data urodzenia
                     date_of_birth = request.POST.get('date_of_birth', '').strip()
@@ -798,14 +797,38 @@ def client_profile(request):
                     messages.success(request, 'Hasło zostało zmienione pomyślnie.')
                 
                 elif section == 'delivery':
-                    # Aktualizuj adres dostawy
-                    profile.address = request.POST.get('delivery_address', '').strip()
-                    # delivery_notes można dodać jako nowe pole w przyszłości
+                    # Aktualizuj szczegółowe pola adresu dostawy
+                    profile.delivery_city = request.POST.get('city', '').strip()
+                    profile.delivery_postal_code = request.POST.get('postal_code', '').strip()
+                    profile.delivery_street = request.POST.get('street', '').strip()
+                    profile.delivery_building_number = request.POST.get('building_number', '').strip()
+                    profile.delivery_apartment_number = request.POST.get('apartment_number', '').strip()
+                    profile.delivery_notes = request.POST.get('delivery_notes', '').strip()
+                    
+                    # Aktualizuj też stare pole address dla kompatybilności
+                    if any([profile.delivery_city, profile.delivery_street, profile.delivery_building_number]):
+                        address_parts = []
+                        if profile.delivery_street and profile.delivery_building_number:
+                            apartment = f"/{profile.delivery_apartment_number}" if profile.delivery_apartment_number else ""
+                            address_parts.append(f"{profile.delivery_street} {profile.delivery_building_number}{apartment}")
+                        if profile.delivery_postal_code and profile.delivery_city:
+                            address_parts.append(f"{profile.delivery_postal_code} {profile.delivery_city}")
+                        if profile.delivery_notes:
+                            address_parts.append(f"Uwagi: {profile.delivery_notes}")
+                        profile.address = ", ".join(address_parts)
+                    
                     profile.save()
                     messages.success(request, 'Adres dostawy został zaktualizowany.')
                 
                 elif section == 'notifications':
-                    # Zapisz ustawienia powiadomień (w przyszłości można dodać model)
+                    # Zapisz ustawienia powiadomień
+                    profile.newsletter = bool(request.POST.get('newsletter'))
+                    profile.subscription_reminders = bool(request.POST.get('subscription_reminders'))
+                    profile.delivery_notifications = bool(request.POST.get('delivery_notifications'))
+                    profile.diet_change_confirmations = bool(request.POST.get('diet_change_confirmations'))
+                    profile.promotional_offers = bool(request.POST.get('promotional_offers'))
+                    
+                    profile.save()
                     messages.success(request, 'Ustawienia powiadomień zostały zapisane.')
                 
                 elif section == 'delete-account':

@@ -9,6 +9,7 @@ import uuid
 # 1. ROZSZERZENIE USER
 # ==========================================
 
+# Zastąp istniejącą klasę UserProfile w frontend/models.py
 class UserProfile(models.Model):
     ROLE_CHOICES = [
         ('manager', 'Menadżer'),
@@ -18,13 +19,36 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
     phone = models.CharField(max_length=15, blank=True)
-    address = models.TextField(blank=True)
+    
+    # Szczegółowe pola adresu dostawy
+    delivery_city = models.CharField(max_length=100, blank=True)
+    delivery_postal_code = models.CharField(max_length=10, blank=True)
+    delivery_street = models.CharField(max_length=200, blank=True)
+    delivery_building_number = models.CharField(max_length=20, blank=True)
+    delivery_apartment_number = models.CharField(max_length=20, blank=True)
+    delivery_notes = models.TextField(blank=True)
+    
     date_of_birth = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     
-    def __str__(self):
-        return f"{self.user.username} - {self.get_role_display()}"
+    # Ustawienia powiadomień
+    newsletter = models.BooleanField(default=True)
+    subscription_reminders = models.BooleanField(default=True)
+    delivery_notifications = models.BooleanField(default=True)
+    diet_change_confirmations = models.BooleanField(default=True)
+    promotional_offers = models.BooleanField(default=False)
+    
+    @property
+    def full_delivery_address(self):
+        """Zwraca pełny adres dostawy jako string"""
+        parts = []
+        if self.delivery_street and self.delivery_building_number:
+            apartment = f"/{self.delivery_apartment_number}" if self.delivery_apartment_number else ""
+            parts.append(f"{self.delivery_street} {self.delivery_building_number}{apartment}")
+        if self.delivery_postal_code and self.delivery_city:
+            parts.append(f"{self.delivery_postal_code} {self.delivery_city}")
+        return ", ".join(parts) if parts else "Brak adresu dostawy"
 
 # ==========================================
 # 2. SKŁADNIKI
