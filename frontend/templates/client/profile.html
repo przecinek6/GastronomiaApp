@@ -47,7 +47,7 @@
                             <button onclick="showSection('delivery')" 
                                     class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200">
                                 <i data-lucide="map-pin" class="w-5 h-5 mr-3"></i>
-                                Adresy dostawy
+                                Adres dostawy
                             </button>
                         </li>
                         <li>
@@ -55,13 +55,6 @@
                                     class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200">
                                 <i data-lucide="bell" class="w-5 h-5 mr-3"></i>
                                 Powiadomienia
-                            </button>
-                        </li>
-                        <li>
-                            <button onclick="showSection('privacy')" 
-                                    class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200">
-                                <i data-lucide="shield" class="w-5 h-5 mr-3"></i>
-                                Prywatność
                             </button>
                         </li>
                     </ul>
@@ -127,7 +120,7 @@
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Imię</label>
                                         <div class="display-field">
-                                            <p class="text-gray-800 text-lg">{{ user.first_name|default:"Nie podano" }}</p>
+                                            <p class="text-gray-800 text-lg border-b-2 border-dotted border-gray-300 pb-1">{{ user.first_name|default:"Nie podano" }}</p>
                                         </div>
                                         <div class="edit-field hidden">
                                             <input type="text" name="first_name" value="{{ user.first_name }}" 
@@ -139,7 +132,7 @@
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nazwisko</label>
                                         <div class="display-field">
-                                            <p class="text-gray-800 text-lg">{{ user.last_name|default:"Nie podano" }}</p>
+                                            <p class="text-gray-800 text-lg border-b-2 border-dotted border-gray-300 pb-1">{{ user.last_name|default:"Nie podano" }}</p>
                                         </div>
                                         <div class="edit-field hidden">
                                             <input type="text" name="last_name" value="{{ user.last_name }}" 
@@ -151,7 +144,7 @@
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Adres email</label>
                                         <div class="display-field">
-                                            <p class="text-gray-800 text-lg">{{ user.email }}</p>
+                                            <p class="text-gray-800 text-lg border-b-2 border-dotted border-gray-300 pb-1">{{ user.email }}</p>
                                         </div>
                                         <div class="edit-field hidden">
                                             <input type="email" name="email" value="{{ user.email }}" 
@@ -163,7 +156,7 @@
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Telefon</label>
                                         <div class="display-field">
-                                            <p class="text-gray-800 text-lg">{{ profile.phone|default:"Nie podano" }}</p>
+                                            <p class="text-gray-800 text-lg border-b-2 border-dotted border-gray-300 pb-1">{{ profile.phone|default:"Nie podano" }}</p>
                                         </div>
                                         <div class="edit-field hidden">
                                             <input type="tel" name="phone" value="{{ profile.phone }}" 
@@ -175,7 +168,7 @@
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Data urodzenia</label>
                                         <div class="display-field">
-                                            <p class="text-gray-800 text-lg">{{ profile.date_of_birth|date:"d.m.Y"|default:"Nie podano" }}</p>
+                                            <p class="text-gray-800 text-lg border-b-2 border-dotted border-gray-300 pb-1">{{ profile.date_of_birth|date:"d.m.Y"|default:"Nie podano" }}</p>
                                         </div>
                                         <div class="edit-field hidden">
                                             <input type="date" name="date_of_birth" value="{{ profile.date_of_birth|date:'Y-m-d' }}" 
@@ -183,24 +176,12 @@
                                         </div>
                                     </div>
 
-                                    <!-- Member Since -->
+                                    <!-- Member Since (display only) -->
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Członek od</label>
                                         <div class="display-field">
-                                            <p class="text-gray-800 text-lg">{{ user.date_joined|date:"d.m.Y" }}</p>
+                                            <p class="text-gray-800 text-lg border-b-2 border-dotted border-gray-300 pb-1">{{ user.date_joined|date:"d.m.Y" }}</p>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <!-- Address -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label>
-                                    <div class="display-field">
-                                        <p class="text-gray-800 text-lg">{{ profile.address|default:"Nie podano" }}</p>
-                                    </div>
-                                    <div class="edit-field hidden">
-                                        <textarea name="address" rows="3" 
-                                                  class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none">{{ profile.address }}</textarea>
                                     </div>
                                 </div>
 
@@ -267,28 +248,6 @@
                                     </div>
                                 </div>
                             </form>
-
-                            <!-- Security Status -->
-                            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-                                    <div class="flex items-center mb-3">
-                                        <i data-lucide="shield-check" class="w-6 h-6 text-green-600 mr-3"></i>
-                                        <h4 class="font-semibold text-green-800">Konto zabezpieczone</h4>
-                                    </div>
-                                    <p class="text-green-700 text-sm">Twoje konto jest chronione silnym hasłem</p>
-                                </div>
-                                
-                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                                    <div class="flex items-center mb-3">
-                                        <i data-lucide="smartphone" class="w-6 h-6 text-yellow-600 mr-3"></i>
-                                        <h4 class="font-semibold text-yellow-800">Uwierzytelnianie dwuskładnikowe</h4>
-                                    </div>
-                                    <p class="text-yellow-700 text-sm mb-3">Wkrótce dostępne</p>
-                                    <button class="text-yellow-800 text-sm font-medium opacity-50 cursor-not-allowed">
-                                        Skonfiguruj 2FA
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -297,31 +256,60 @@
                 <div id="delivery" class="profile-section hidden">
                     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                         <div class="p-8">
-                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Adresy dostawy</h1>
-                            <p class="text-gray-600 mb-8">Zarządzaj adresami i instrukcjami dostawy</p>
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Adres dostawy</h1>
+                            <p class="text-gray-600 mb-8">Zarządzaj adresem i instrukcjami dostawy</p>
 
                             <form id="delivery-form" method="post" action="{% url 'client_profile' %}" class="space-y-6">
                                 {% csrf_token %}
                                 <input type="hidden" name="section" value="delivery">
                                 
-                                <!-- Main Address -->
+                                <!-- Address Details -->
                                 <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Główny adres dostawy</h3>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Adres dostawy</h3>
                                     
-                                    <div class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label>
-                                            <textarea name="delivery_address" rows="3" 
-                                                      class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none"
-                                                      placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto">{{ profile.address }}</textarea>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Miasto *</label>
+                                            <input type="text" name="city" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors"
+                                                   placeholder="Nazwa miasta">
                                         </div>
                                         
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Instrukcje dla kuriera</label>
-                                            <textarea name="delivery_notes" rows="3" 
-                                                      class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none"
-                                                      placeholder="Kod bramy, piętro, godziny dostaw, uwagi dla kuriera..."></textarea>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Kod pocztowy *</label>
+                                            <input type="text" name="postal_code" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors"
+                                                   placeholder="00-000">
                                         </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Ulica *</label>
+                                            <input type="text" name="street" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors"
+                                                   placeholder="Nazwa ulicy">
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nr budynku *</label>
+                                                <input type="text" name="building_number" 
+                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors"
+                                                       placeholder="12">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nr mieszkania</label>
+                                                <input type="text" name="apartment_number" 
+                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors"
+                                                       placeholder="5A">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Instrukcje dla kuriera</label>
+                                        <textarea name="delivery_notes" rows="3" 
+                                                  class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none"
+                                                  placeholder="Kod bramy, piętro, godziny dostaw, uwagi dla kuriera..."></textarea>
                                     </div>
                                     
                                     <div class="mt-6">
@@ -367,44 +355,31 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="section" value="notifications">
                                 
-                                <!-- Essential Notifications -->
+                                <!-- All Notifications -->
                                 <div>
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Powiadomienia istotne</h3>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-6">Powiadomienia</h3>
                                     <div class="space-y-4">
-                                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
-                                            <div class="flex items-start">
-                                                <input type="checkbox" name="delivery_notifications" checked disabled
-                                                       class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
-                                                <div class="ml-3">
-                                                    <label class="font-medium text-gray-800">Powiadomienia o dostawach</label>
-                                                    <p class="text-sm text-gray-600 mt-1">SMS i email o statusie przygotowania i dostawy</p>
-                                                </div>
+                                        <!-- Delivery Notifications -->
+                                        <div class="flex items-start p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <input type="checkbox" name="delivery_notifications" checked
+                                                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
+                                            <div class="ml-3">
+                                                <label class="font-medium text-gray-800">Powiadomienia o dostawach (Email)</label>
+                                                <p class="text-sm text-gray-600 mt-1">Email o statusie przygotowania i dostawy posiłków</p>
                                             </div>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                Wymagane
-                                            </span>
                                         </div>
                                         
-                                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
-                                            <div class="flex items-start">
-                                                <input type="checkbox" name="subscription_reminders" checked disabled
-                                                       class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
-                                                <div class="ml-3">
-                                                    <label class="font-medium text-gray-800">Przypomnienia o subskrypcji</label>
-                                                    <p class="text-sm text-gray-600 mt-1">Informacje przed końcem subskrypcji</p>
-                                                </div>
+                                        <!-- Subscription Reminders -->
+                                        <div class="flex items-start p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <input type="checkbox" name="subscription_reminders" checked
+                                                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
+                                            <div class="ml-3">
+                                                <label class="font-medium text-gray-800">Przypomnienia o subskrypcji</label>
+                                                <p class="text-sm text-gray-600 mt-1">Informacje przed końcem subskrypcji</p>
                                             </div>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                Wymagane
-                                            </span>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <!-- Marketing Communications -->
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Komunikacja marketingowa</h3>
-                                    <div class="space-y-4">
+                                        
+                                        <!-- Newsletter -->
                                         <div class="flex items-start p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                             <input type="checkbox" name="newsletter" checked
                                                    class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
@@ -414,12 +389,23 @@
                                             </div>
                                         </div>
                                         
+                                        <!-- Promotional Offers -->
                                         <div class="flex items-start p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                             <input type="checkbox" name="promotional_offers"
                                                    class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
                                             <div class="ml-3">
                                                 <label class="font-medium text-gray-800">Oferty promocyjne</label>
                                                 <p class="text-sm text-gray-600 mt-1">Specjalne zniżki i promocje (kilka razy w miesiącu)</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Diet Change Confirmations -->
+                                        <div class="flex items-start p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <input type="checkbox" name="diet_change_confirmations" checked
+                                                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
+                                            <div class="ml-3">
+                                                <label class="font-medium text-gray-800">Potwierdzenia zmian diety</label>
+                                                <p class="text-sm text-gray-600 mt-1">Powiadomienia o zmianach planu dietetycznego</p>
                                             </div>
                                         </div>
                                     </div>
@@ -433,47 +419,6 @@
                                     </button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Privacy Section -->
-                <div id="privacy" class="profile-section hidden">
-                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                        <div class="p-8">
-                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Prywatność i dane</h1>
-                            <p class="text-gray-600 mb-8">Informacje o przetwarzaniu Twoich danych osobowych</p>
-
-                            <div class="space-y-6">
-                                <!-- GDPR Info -->
-                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                                    <h3 class="text-lg font-semibold text-blue-800 mb-4">Zgodność z RODO</h3>
-                                    <ul class="space-y-2 text-blue-700 text-sm">
-                                        <li class="flex items-start">
-                                            <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
-                                            Twoje dane są przetwarzane zgodnie z przepisami RODO
-                                        </li>
-                                        <li class="flex items-start">
-                                            <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
-                                            Nie udostępniamy danych osobom trzecim bez zgody
-                                        </li>
-                                        <li class="flex items-start">
-                                            <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
-                                            Dane są szyfrowane i bezpiecznie przechowywane
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Data Download -->
-                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Eksport danych</h3>
-                                    <p class="text-gray-600 mb-4">Pobierz kopię wszystkich swoich danych w formacie JSON</p>
-                                    <button class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors opacity-50 cursor-not-allowed">
-                                        <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
-                                        Pobierz dane (wkrótce)
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -590,9 +535,8 @@ function showSection(sectionName) {
             
             if ((sectionName === 'personal-data' && text.includes('dane osobowe')) ||
                 (sectionName === 'security' && text.includes('bezpieczeństwo')) ||
-                (sectionName === 'delivery' && text.includes('adresy dostawy')) ||
+                (sectionName === 'delivery' && text.includes('adres dostawy')) ||
                 (sectionName === 'notifications' && text.includes('powiadomienia')) ||
-                (sectionName === 'privacy' && text.includes('prywatność')) ||
                 (sectionName === 'delete-account' && text.includes('usuń konto'))) {
                 
                 item.classList.remove('text-gray-700', 'text-red-600', 'hover:bg-green-50', 'hover:text-green-700', 'hover:bg-red-50');
@@ -619,15 +563,12 @@ function toggleEditPersonalData() {
     const displayFields = document.querySelectorAll('#personal-data .display-field');
     const editFields = document.querySelectorAll('#personal-data .edit-field');
     const formActions = document.getElementById('personal-data-actions');
-    const editButton = document.getElementById('edit-personal-data');
     
     if (isEditingPersonalData) {
         // Switch to edit mode
         displayFields.forEach(field => field.classList.add('hidden'));
         editFields.forEach(field => field.classList.remove('hidden'));
         formActions.classList.remove('hidden');
-        editButton.innerHTML = '<i data-lucide="x" class="w-4 h-4 inline mr-2"></i><span>Anuluj</span>';
-        editButton.className = 'bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors';
         
         // Focus on first input
         const firstInput = document.querySelector('#personal-data .edit-field input');
@@ -638,8 +579,6 @@ function toggleEditPersonalData() {
         displayFields.forEach(field => field.classList.remove('hidden'));
         editFields.forEach(field => field.classList.add('hidden'));
         formActions.classList.add('hidden');
-        editButton.innerHTML = '<i data-lucide="edit" class="w-4 h-4 inline mr-2"></i><span>Edytuj</span>';
-        editButton.className = 'bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors';
     }
     
     // Re-initialize Lucide icons
