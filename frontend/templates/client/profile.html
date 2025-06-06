@@ -1,0 +1,739 @@
+{% extends "base.html" %}
+
+{% block title %}Profil użytkownika{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex">
+            
+            <!-- Sidebar Menu -->
+            <div class="w-80 bg-white shadow-xl min-h-screen">
+                <div class="p-8 border-b border-gray-100">
+                    <!-- User Avatar & Info -->
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-white font-bold text-2xl">{{ user.first_name.0|default:user.username.0|upper }}</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">{{ user.first_name }} {{ user.last_name }}</h2>
+                        <p class="text-gray-600 text-sm">{{ user.email }}</p>
+                        <div class="mt-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i data-lucide="shield-check" class="w-3 h-3 mr-1"></i>
+                                Zweryfikowany
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="py-4">
+                    <ul class="space-y-1">
+                        <li>
+                            <button onclick="showSection('personal-data')" 
+                                    class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 active">
+                                <i data-lucide="user" class="w-5 h-5 mr-3"></i>
+                                Dane osobowe
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="showSection('security')" 
+                                    class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200">
+                                <i data-lucide="lock" class="w-5 h-5 mr-3"></i>
+                                Bezpieczeństwo
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="showSection('delivery')" 
+                                    class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200">
+                                <i data-lucide="map-pin" class="w-5 h-5 mr-3"></i>
+                                Adresy dostawy
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="showSection('notifications')" 
+                                    class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200">
+                                <i data-lucide="bell" class="w-5 h-5 mr-3"></i>
+                                Powiadomienia
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="showSection('privacy')" 
+                                    class="nav-item w-full flex items-center px-6 py-3 text-left text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200">
+                                <i data-lucide="shield" class="w-5 h-5 mr-3"></i>
+                                Prywatność
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Danger Zone -->
+                    <div class="mt-8 pt-6 border-t border-gray-100">
+                        <h3 class="px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Strefa niebezpieczna</h3>
+                        <button onclick="showSection('delete-account')" 
+                                class="nav-item w-full flex items-center px-6 py-3 text-left text-red-600 hover:bg-red-50 transition-colors duration-200">
+                            <i data-lucide="trash-2" class="w-5 h-5 mr-3"></i>
+                            Usuń konto
+                        </button>
+                    </div>
+                </nav>
+
+                <!-- Back to Dashboard -->
+                <div class="p-6 border-t border-gray-100 mt-8">
+                    <a href="{% url 'client_dashboard' %}" 
+                       class="flex items-center text-gray-600 hover:text-gray-800 transition-colors text-sm">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                        Powrót do dashboardu
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 py-8 px-8">
+                
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mb-6">
+                        {% for message in messages %}
+                            <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %} border rounded-lg p-4 mb-4">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Personal Data Section -->
+                <div id="personal-data" class="profile-section">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="p-8">
+                            <div class="flex justify-between items-center mb-8">
+                                <div>
+                                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Dane osobowe</h1>
+                                    <p class="text-gray-600">Zarządzaj swoimi podstawowymi informacjami</p>
+                                </div>
+                                <button id="edit-personal-data" 
+                                        onclick="toggleEditPersonalData()" 
+                                        class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                    <i data-lucide="edit" class="w-4 h-4 inline mr-2"></i>
+                                    <span>Edytuj</span>
+                                </button>
+                            </div>
+
+                            <form id="personal-data-form" method="post" action="{% url 'client_profile' %}" class="space-y-6">
+                                {% csrf_token %}
+                                <input type="hidden" name="section" value="personal-data">
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- First Name -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Imię</label>
+                                        <div class="display-field">
+                                            <p class="text-gray-800 text-lg">{{ user.first_name|default:"Nie podano" }}</p>
+                                        </div>
+                                        <div class="edit-field hidden">
+                                            <input type="text" name="first_name" value="{{ user.first_name }}" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                        </div>
+                                    </div>
+
+                                    <!-- Last Name -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nazwisko</label>
+                                        <div class="display-field">
+                                            <p class="text-gray-800 text-lg">{{ user.last_name|default:"Nie podano" }}</p>
+                                        </div>
+                                        <div class="edit-field hidden">
+                                            <input type="text" name="last_name" value="{{ user.last_name }}" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Adres email</label>
+                                        <div class="display-field">
+                                            <p class="text-gray-800 text-lg">{{ user.email }}</p>
+                                        </div>
+                                        <div class="edit-field hidden">
+                                            <input type="email" name="email" value="{{ user.email }}" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                        </div>
+                                    </div>
+
+                                    <!-- Phone -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Telefon</label>
+                                        <div class="display-field">
+                                            <p class="text-gray-800 text-lg">{{ profile.phone|default:"Nie podano" }}</p>
+                                        </div>
+                                        <div class="edit-field hidden">
+                                            <input type="tel" name="phone" value="{{ profile.phone }}" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                        </div>
+                                    </div>
+
+                                    <!-- Date of Birth -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Data urodzenia</label>
+                                        <div class="display-field">
+                                            <p class="text-gray-800 text-lg">{{ profile.date_of_birth|date:"d.m.Y"|default:"Nie podano" }}</p>
+                                        </div>
+                                        <div class="edit-field hidden">
+                                            <input type="date" name="date_of_birth" value="{{ profile.date_of_birth|date:'Y-m-d' }}" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                        </div>
+                                    </div>
+
+                                    <!-- Member Since -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Członek od</label>
+                                        <div class="display-field">
+                                            <p class="text-gray-800 text-lg">{{ user.date_joined|date:"d.m.Y" }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Address -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label>
+                                    <div class="display-field">
+                                        <p class="text-gray-800 text-lg">{{ profile.address|default:"Nie podano" }}</p>
+                                    </div>
+                                    <div class="edit-field hidden">
+                                        <textarea name="address" rows="3" 
+                                                  class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none">{{ profile.address }}</textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Form Actions -->
+                                <div id="personal-data-actions" class="hidden border-t pt-6">
+                                    <div class="flex gap-4 justify-end">
+                                        <button type="button" onclick="cancelEditPersonalData()" 
+                                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                            Anuluj
+                                        </button>
+                                        <button type="submit" 
+                                                class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                            Zapisz zmiany
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Section -->
+                <div id="security" class="profile-section hidden">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="p-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Bezpieczeństwo konta</h1>
+                            <p class="text-gray-600 mb-8">Zarządzaj hasłem i ustawieniami bezpieczeństwa</p>
+
+                            <!-- Change Password Form -->
+                            <form id="password-form" method="post" action="{% url 'client_profile' %}" class="space-y-6">
+                                {% csrf_token %}
+                                <input type="hidden" name="section" value="security">
+                                
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-blue-800 mb-4">Zmiana hasła</h3>
+                                    
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Obecne hasło</label>
+                                            <input type="password" name="old_password" 
+                                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nowe hasło</label>
+                                                <input type="password" name="new_password1" 
+                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-semibold text-gray-700 mb-2">Potwierdź hasło</label>
+                                                <input type="password" name="new_password2" 
+                                                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-6">
+                                        <button type="submit" 
+                                                class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                                            <i data-lucide="key" class="w-4 h-4 inline mr-2"></i>
+                                            Zmień hasło
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Security Status -->
+                            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                                    <div class="flex items-center mb-3">
+                                        <i data-lucide="shield-check" class="w-6 h-6 text-green-600 mr-3"></i>
+                                        <h4 class="font-semibold text-green-800">Konto zabezpieczone</h4>
+                                    </div>
+                                    <p class="text-green-700 text-sm">Twoje konto jest chronione silnym hasłem</p>
+                                </div>
+                                
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                                    <div class="flex items-center mb-3">
+                                        <i data-lucide="smartphone" class="w-6 h-6 text-yellow-600 mr-3"></i>
+                                        <h4 class="font-semibold text-yellow-800">Uwierzytelnianie dwuskładnikowe</h4>
+                                    </div>
+                                    <p class="text-yellow-700 text-sm mb-3">Wkrótce dostępne</p>
+                                    <button class="text-yellow-800 text-sm font-medium opacity-50 cursor-not-allowed">
+                                        Skonfiguruj 2FA
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Section -->
+                <div id="delivery" class="profile-section hidden">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="p-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Adresy dostawy</h1>
+                            <p class="text-gray-600 mb-8">Zarządzaj adresami i instrukcjami dostawy</p>
+
+                            <form id="delivery-form" method="post" action="{% url 'client_profile' %}" class="space-y-6">
+                                {% csrf_token %}
+                                <input type="hidden" name="section" value="delivery">
+                                
+                                <!-- Main Address -->
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Główny adres dostawy</h3>
+                                    
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Adres</label>
+                                            <textarea name="delivery_address" rows="3" 
+                                                      class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none"
+                                                      placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto">{{ profile.address }}</textarea>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Instrukcje dla kuriera</label>
+                                            <textarea name="delivery_notes" rows="3" 
+                                                      class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors resize-none"
+                                                      placeholder="Kod bramy, piętro, godziny dostaw, uwagi dla kuriera..."></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-6">
+                                        <button type="submit" 
+                                                class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                                            <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
+                                            Zapisz adres
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Delivery Info -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                    <h4 class="font-semibold text-blue-800 mb-3">Informacje o dostawie</h4>
+                                    <ul class="space-y-2 text-blue-700 text-sm">
+                                        <li class="flex items-center">
+                                            <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
+                                            Dostawy: Pon-Pt 7:00-18:00, Sob 8:00-15:00
+                                        </li>
+                                        <li class="flex items-center">
+                                            <i data-lucide="package" class="w-4 h-4 mr-2"></i>
+                                            Posiłki w torbach termicznych
+                                        </li>
+                                        <li class="flex items-center">
+                                            <i data-lucide="smartphone" class="w-4 h-4 mr-2"></i>
+                                            SMS z powiadomieniem o dostawie
+                                        </li>
+                                    </ul>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Section -->
+                <div id="notifications" class="profile-section hidden">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="p-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Ustawienia powiadomień</h1>
+                            <p class="text-gray-600 mb-8">Personalizuj sposób komunikacji z nami</p>
+
+                            <form id="notifications-form" method="post" action="{% url 'client_profile' %}" class="space-y-8">
+                                {% csrf_token %}
+                                <input type="hidden" name="section" value="notifications">
+                                
+                                <!-- Essential Notifications -->
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Powiadomienia istotne</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                                            <div class="flex items-start">
+                                                <input type="checkbox" name="delivery_notifications" checked disabled
+                                                       class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-800">Powiadomienia o dostawach</label>
+                                                    <p class="text-sm text-gray-600 mt-1">SMS i email o statusie przygotowania i dostawy</p>
+                                                </div>
+                                            </div>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                Wymagane
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                                            <div class="flex items-start">
+                                                <input type="checkbox" name="subscription_reminders" checked disabled
+                                                       class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-800">Przypomnienia o subskrypcji</label>
+                                                    <p class="text-sm text-gray-600 mt-1">Informacje przed końcem subskrypcji</p>
+                                                </div>
+                                            </div>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                Wymagane
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Marketing Communications -->
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Komunikacja marketingowa</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-start p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <input type="checkbox" name="newsletter" checked
+                                                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
+                                            <div class="ml-3">
+                                                <label class="font-medium text-gray-800">Newsletter</label>
+                                                <p class="text-sm text-gray-600 mt-1">Nowości, porady żywieniowe (1-2x w tygodniu)</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-start p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <input type="checkbox" name="promotional_offers"
+                                                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mt-1">
+                                            <div class="ml-3">
+                                                <label class="font-medium text-gray-800">Oferty promocyjne</label>
+                                                <p class="text-sm text-gray-600 mt-1">Specjalne zniżki i promocje (kilka razy w miesiącu)</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="border-t pt-6">
+                                    <button type="submit" 
+                                            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                                        <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
+                                        Zapisz ustawienia
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy Section -->
+                <div id="privacy" class="profile-section hidden">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="p-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Prywatność i dane</h1>
+                            <p class="text-gray-600 mb-8">Informacje o przetwarzaniu Twoich danych osobowych</p>
+
+                            <div class="space-y-6">
+                                <!-- GDPR Info -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-blue-800 mb-4">Zgodność z RODO</h3>
+                                    <ul class="space-y-2 text-blue-700 text-sm">
+                                        <li class="flex items-start">
+                                            <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                            Twoje dane są przetwarzane zgodnie z przepisami RODO
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                            Nie udostępniamy danych osobom trzecim bez zgody
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                            Dane są szyfrowane i bezpiecznie przechowywane
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Data Download -->
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Eksport danych</h3>
+                                    <p class="text-gray-600 mb-4">Pobierz kopię wszystkich swoich danych w formacie JSON</p>
+                                    <button class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors opacity-50 cursor-not-allowed">
+                                        <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                                        Pobierz dane (wkrótce)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Account Section -->
+                <div id="delete-account" class="profile-section hidden">
+                    <div class="bg-white rounded-2xl shadow-lg border border-red-200 overflow-hidden">
+                        <div class="p-8">
+                            <div class="text-center mb-8">
+                                <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="alert-triangle" class="w-8 h-8 text-white"></i>
+                                </div>
+                                <h1 class="text-3xl font-bold text-red-600 mb-2">Usuń konto</h1>
+                                <p class="text-gray-600">Ta akcja jest nieodwracalna</p>
+                            </div>
+
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                                <h3 class="text-lg font-semibold text-red-800 mb-4">Co się stanie po usunięciu konta?</h3>
+                                <ul class="space-y-2 text-red-700 text-sm">
+                                    <li class="flex items-start">
+                                        <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                        Wszystkie aktywne subskrypcje zostaną anulowane
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                        Historia zamówień zostanie usunięta
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                        Punkty lojalnościowe przepadną
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                        Dostęp do konta zostanie trwale zablokowany
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <form id="delete-form" method="post" action="{% url 'client_profile' %}" class="space-y-6">
+                                {% csrf_token %}
+                                <input type="hidden" name="section" value="delete-account">
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Wpisz "USUŃ KONTO" aby potwierdzić
+                                    </label>
+                                    <input type="text" name="confirmation" 
+                                           class="w-full px-4 py-3 rounded-lg border border-red-300 focus:border-red-500 focus:outline-none transition-colors"
+                                           placeholder="USUŃ KONTO">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Wprowadź hasło</label>
+                                    <input type="password" name="password" 
+                                           class="w-full px-4 py-3 rounded-lg border border-red-300 focus:border-red-500 focus:outline-none transition-colors"
+                                           placeholder="Twoje hasło">
+                                </div>
+
+                                <div class="flex gap-4">
+                                    <button type="button" onclick="showSection('personal-data')" 
+                                            class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                        Anuluj
+                                    </button>
+                                    <button type="submit" 
+                                            class="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4 inline mr-2"></i>
+                                        Usuń konto
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Show default section
+    showSection('personal-data');
+});
+
+function showSection(sectionName) {
+    // Hide all sections
+    document.querySelectorAll('.profile-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Remove active class from all nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active', 'bg-green-50', 'text-green-700', 'bg-red-50', 'text-red-600');
+        if (item.textContent.includes('Usuń konto')) {
+            item.classList.add('text-red-600', 'hover:bg-red-50');
+        } else {
+            item.classList.add('text-gray-700', 'hover:bg-green-50', 'hover:text-green-700');
+        }
+    });
+    
+    // Show selected section
+    const section = document.getElementById(sectionName);
+    if (section) {
+        section.classList.remove('hidden');
+        
+        // Add active class to corresponding nav item
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            const text = item.textContent.trim().toLowerCase();
+            
+            if ((sectionName === 'personal-data' && text.includes('dane osobowe')) ||
+                (sectionName === 'security' && text.includes('bezpieczeństwo')) ||
+                (sectionName === 'delivery' && text.includes('adresy dostawy')) ||
+                (sectionName === 'notifications' && text.includes('powiadomienia')) ||
+                (sectionName === 'privacy' && text.includes('prywatność')) ||
+                (sectionName === 'delete-account' && text.includes('usuń konto'))) {
+                
+                item.classList.remove('text-gray-700', 'text-red-600', 'hover:bg-green-50', 'hover:text-green-700', 'hover:bg-red-50');
+                
+                if (sectionName === 'delete-account') {
+                    item.classList.add('active', 'bg-red-50', 'text-red-600');
+                } else {
+                    item.classList.add('active', 'bg-green-50', 'text-green-700');
+                }
+            }
+        });
+    }
+    
+    // Re-initialize icons after DOM changes
+    lucide.createIcons();
+}
+
+// Personal data editing
+let isEditingPersonalData = false;
+
+function toggleEditPersonalData() {
+    isEditingPersonalData = !isEditingPersonalData;
+    
+    const displayFields = document.querySelectorAll('#personal-data .display-field');
+    const editFields = document.querySelectorAll('#personal-data .edit-field');
+    const formActions = document.getElementById('personal-data-actions');
+    const editButton = document.getElementById('edit-personal-data');
+    
+    if (isEditingPersonalData) {
+        // Switch to edit mode
+        displayFields.forEach(field => field.classList.add('hidden'));
+        editFields.forEach(field => field.classList.remove('hidden'));
+        formActions.classList.remove('hidden');
+        editButton.innerHTML = '<i data-lucide="x" class="w-4 h-4 inline mr-2"></i><span>Anuluj</span>';
+        editButton.className = 'bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors';
+        
+        // Focus on first input
+        const firstInput = document.querySelector('#personal-data .edit-field input');
+        if (firstInput) firstInput.focus();
+        
+    } else {
+        // Switch to display mode
+        displayFields.forEach(field => field.classList.remove('hidden'));
+        editFields.forEach(field => field.classList.add('hidden'));
+        formActions.classList.add('hidden');
+        editButton.innerHTML = '<i data-lucide="edit" class="w-4 h-4 inline mr-2"></i><span>Edytuj</span>';
+        editButton.className = 'bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors';
+    }
+    
+    // Re-initialize Lucide icons
+    lucide.createIcons();
+}
+
+function cancelEditPersonalData() {
+    // Reset form to original values
+    document.getElementById('personal-data-form').reset();
+    
+    // Switch back to display mode
+    isEditingPersonalData = true; // Set to true so toggleEditPersonalData() will switch to false
+    toggleEditPersonalData();
+}
+
+// Form submission loading states
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton && !submitButton.disabled) {
+            const originalContent = submitButton.innerHTML;
+            submitButton.innerHTML = '<i data-lucide="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>Zapisywanie...';
+            submitButton.disabled = true;
+            
+            // Re-enable after 3 seconds in case form doesn't redirect
+            setTimeout(() => {
+                submitButton.innerHTML = originalContent;
+                submitButton.disabled = false;
+                lucide.createIcons();
+            }, 3000);
+        }
+    });
+});
+
+// Delete account form validation
+document.getElementById('delete-form').addEventListener('submit', function(e) {
+    const confirmation = this.querySelector('input[name="confirmation"]').value;
+    const password = this.querySelector('input[name="password"]').value;
+    
+    if (confirmation !== 'USUŃ KONTO') {
+        e.preventDefault();
+        alert('Wprowadź dokładnie "USUŃ KONTO" aby potwierdzić.');
+        return false;
+    }
+    
+    if (!password.trim()) {
+        e.preventDefault();
+        alert('Wprowadź hasło aby potwierdzić usunięcie konta.');
+        return false;
+    }
+    
+    if (!confirm('Czy na pewno chcesz usunąć swoje konto? Ta akcja jest nieodwracalna!')) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+
+<style>
+.nav-item.active {
+    font-weight: 600;
+    border-right: 3px solid currentColor;
+}
+
+.profile-section {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom scrollbar for sidebar */
+.min-h-screen {
+    scrollbar-width: thin;
+    scrollbar-color: #e5e7eb #f9fafb;
+}
+
+.min-h-screen::-webkit-scrollbar {
+    width: 6px;
+}
+
+.min-h-screen::-webkit-scrollbar-track {
+    background: #f9fafb;
+}
+
+.min-h-screen::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 3px;
+}
+
+.min-h-screen::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}
+</style>
+{% endblock content %}

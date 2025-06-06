@@ -10,14 +10,7 @@ urlpatterns = [
     
     # Panel klienta
     path('dashboard/', views.client_dashboard, name='client_dashboard'),
-
-    # Panel klienta - profil
     path('profile/', views.client_profile, name='client_profile'),
-    path('profile/personal-data/', views.profile_personal_data, name='profile_personal_data'),
-    path('profile/change-password/', views.profile_change_password, name='profile_change_password'),
-    path('profile/delivery-address/', views.profile_delivery_address, name='profile_delivery_address'),
-    path('profile/notifications/', views.profile_notifications, name='profile_notifications'),
-    path('profile/delete-account/', views.profile_delete_account, name='profile_delete_account'),
 
     # Przeglądanie planów dietetycznych (klienci)
     path('plans/', views.browse_diet_plans, name='browse_diet_plans'),
