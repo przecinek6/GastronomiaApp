@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Moje płatności{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Historia płatności</h1>
+                <p class="text-gray-600">Wszystkie Twoje transakcje w jednym miejscu</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-gray-600">Wydano łącznie</p>
+                <p class="text-2xl font-bold text-gray-800">{{ total_spent|floatformat:2 }} zł</p>
+            </div>
+        </div>
+
+        <!-- Payments List -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            {% if page_obj %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Data</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Plan</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Okres</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Status</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold text-gray-700">Kwota</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for payment in page_obj %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <p class="font-medium text-gray-800">{{ payment.created_at|date:"d.m.Y" }}</p>
+                                        <p class="text-sm text-gray-500">{{ payment.created_at|date:"H:i" }}</p>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <p class="font-medium text-gray-800">{{ payment.subscription.diet_plan.name }}</p>
+                                        <p class="text-sm text-gray-500">ID: {{ payment.stripe_payment_intent_id|truncatechars:20 }}</p>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span class="text-gray-800">{{ payment.subscription.get_duration_display }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        {% if payment.status == 'completed' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <i data-lucide="check" class="w-3 h-3 mr-1"></i>
+                                                Opłacone
+                                            </span>
+                                        {% elif payment.status == 'pending' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
+                                                Oczekuje
+                                            </span>
+                                        {% elif payment.status == 'failed' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                <i data-lucide="x" class="w-3 h-3 mr-1"></i>
+                                                Nieudane
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                <i data-lucide="rotate-ccw" class="w-3 h-3 mr-1"></i>
+                                                Zwrot
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <span class="font-medium text-gray-800">{{ payment.amount }} zł</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <a href="{% url 'subscription_detail' payment.subscription.id %}" 
+                                           class="text-blue-600 hover:text-blue-700">
+                                            Zobacz subskrypcję
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <div class="px-6 py-4 border-t border-gray-100">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm text-gray-700">
+                                Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}
+                            </div>
+                            <div class="flex space-x-2">
+                                {% if page_obj.has_previous %}
+                                    <a href="?page={{ page_obj.previous_page_number }}" 
+                                       class="px-3 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                                        Poprzednia
+                                    </a>
+                                {% endif %}
+
+                                <span class="px-3 py-2 text-sm bg-green-500 text-white rounded">
+                                    {{ page_obj.number }}
+                                </span>
+
+                                {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}" 
+                                       class="px-3 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                                        Następna
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-12">
+                    <i data-lucide="credit-card" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Brak historii płatności</h3>
+                    <p class="text-gray-600 mb-6">Twoje przyszłe płatności pojawią się tutaj</p>
+                    <a href="{% url 'browse_diet_plans' %}" 
+                       class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                        <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>
+                        Przeglądaj plany dietetyczne
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Back Link -->
+        <div class="mt-8">
+            <a href="{% url 'client_dashboard' %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do dashboardu
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}

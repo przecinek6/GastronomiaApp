@@ -3,13 +3,15 @@ from django.contrib.auth import authenticate, login, logout, get_user_model, upd
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from frontend.models import UserProfile, Ingredient, Dish, DishIngredient, DietPlan, MealPlan
-from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet, DietPlanForm, ProfileUpdateForm, CustomPasswordChangeForm, DeliveryAddressForm, NotificationSettingsForm
+from frontend.models import UserProfile, Ingredient, Dish, DishIngredient, DietPlan, MealPlan, Subscription, DietChange, Payment, Delivery, ReferralProgram
+from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet, DietPlanForm, SubscriptionForm, PauseSubscriptionForm, ChangeDietForm
 import traceback
+from datetime import date, timedelta
+
 
 User = get_user_model()
 
@@ -703,15 +705,70 @@ def client_dashboard(request):
             loyalty_level='bronze'
         )
     
-    # Podstawowe statystyki (na razie mock data)
+    # Pobierz aktywne subskrypcje
+    active_subscriptions = Subscription.objects.filter(
+        client=request.user,
+        status__in=['active', 'paused']
+    ).select_related('diet_plan').order_by('-created_at')
+    
+    # Pobierz ostatnie zamówienia/płatności
+    recent_orders = Payment.objects.filter(
+        subscription__client=request.user,
+        status='completed'
+    ).select_related('subscription__diet_plan').order_by('-created_at')[:5]
+    
+    # Pobierz nadchodzące dostawy (dla aktywnych subskrypcji)
+    upcoming_deliveries = []
+    for sub in active_subscriptions:
+        # Symuluj najbliższą dostawę
+        next_delivery = date.today() + timedelta(days=1)
+        if next_delivery.weekday() == 6:  # Niedziela
+            next_delivery += timedelta(days=1)
+        upcoming_deliveries.append({
+            'subscription': sub,
+            'date': next_delivery,
+            'time': '7:00-9:00'
+        })
+    
+    # Generuj kod polecający
+    referral_code = f'REF{request.user.id:05d}'
+    
+    # Sprawdź ile osób poleciłeś
+    referrals_count = ReferralProgram.objects.filter(
+        referrer=request.user,
+        status='completed'
+    ).count()
+    
+    # Oblicz wartość punktów (10 punktów = 1 zł)
+    loyalty_value = loyalty_account.points_balance // 10
+    
+    # Oblicz postęp do następnego poziomu
+    if loyalty_account.loyalty_level == 'bronze':
+        next_level_points = 500
+        progress_percentage = min(100, (loyalty_account.total_points_earned / 500) * 100)
+    elif loyalty_account.loyalty_level == 'silver':
+        next_level_points = 1000
+        progress_percentage = min(100, ((loyalty_account.total_points_earned - 500) / 500) * 100)
+    elif loyalty_account.loyalty_level == 'gold':
+        next_level_points = 2000
+        progress_percentage = min(100, ((loyalty_account.total_points_earned - 1000) / 1000) * 100)
+    else:  # platinum
+        next_level_points = 0
+        progress_percentage = 100
+    
     context = {
-        'active_subscriptions': 0,  # Dodamy później gdy będą subskrypcje
+        'active_subscriptions': active_subscriptions,
+        'recent_orders': recent_orders,
+        'upcoming_deliveries': upcoming_deliveries,
+        'loyalty_account': loyalty_account,
         'loyalty_points': loyalty_account.points_balance,
         'loyalty_level': loyalty_account.get_loyalty_level_display(),
-        'loyalty_value': loyalty_account.points_balance // 10,  # 10 punktów = 1 zł
-        'total_orders': 0,  # Dodamy później
-        'total_saved': 0,  # Dodamy później
-        'referral_code': f'USER{request.user.id:03d}',  # Prosty kod polecający
+        'loyalty_value': loyalty_value,
+        'progress_percentage': int(progress_percentage),
+        'next_level_points': next_level_points - loyalty_account.total_points_earned if next_level_points > 0 else 0,
+        'referral_code': referral_code,
+        'referrals_count': referrals_count,
+        'total_saved': 0,  # TODO: Obliczać na podstawie wykorzystanych punktów
     }
     
     return render(request, 'client/dashboard.html', context)
@@ -1238,15 +1295,6 @@ def ingredients_list_api(request):
     
     return JsonResponse({'ingredients': data})
 
-# Dodaj importy na początku pliku
-from datetime import date, timedelta
-from decimal import Decimal
-from django.urls import reverse
-from frontend.models import Subscription, DietChange, Payment, Delivery
-from frontend.forms import SubscriptionForm, PauseSubscriptionForm, ChangeDietForm
-
-# Dodaj te widoki na końcu pliku
-
 # ==========================================
 # MODUŁ ZAMÓWIEŃ I SUBSKRYPCJI
 # ==========================================
@@ -1548,7 +1596,7 @@ def diet_change(request, subscription_id):
                     
                     # Proporcjonalny koszt starej i nowej diety
                     old_daily_rate = subscription.total_amount / total_days
-                    new_daily_rate = self._calculate_daily_rate(new_plan, subscription.duration)
+                    new_daily_rate = _calculate_daily_rate(new_plan, subscription.duration)
                     
                     price_adjustment = (new_daily_rate - old_daily_rate) * days_remaining
                     
@@ -1591,7 +1639,7 @@ def diet_change(request, subscription_id):
     # Pobierz dostępne plany z cenami
     available_plans = []
     for plan in form.fields['new_diet_plan'].queryset:
-        daily_rate = self._calculate_daily_rate(plan, subscription.duration)
+        daily_rate = _calculate_daily_rate(plan, subscription.duration)
         current_daily_rate = subscription.total_amount / (subscription.end_date - subscription.start_date).days
         price_diff = daily_rate - current_daily_rate
         
@@ -1610,39 +1658,43 @@ def diet_change(request, subscription_id):
     
     return render(request, 'client/subscriptions/diet_change.html', context)
 
-
-def _calculate_daily_rate(diet_plan, duration):
-    """Helper do obliczania dziennej stawki"""
-    if duration == 'week':
-        return float(diet_plan.weekly_price) / 7
-    elif duration == 'month':
-        return float(diet_plan.monthly_price) / 30
-    else:  # year
-        return float(diet_plan.yearly_price) / 365
-
-
 @login_required
-def delivery_tracking(request, subscription_id):
-    """Śledzenie dostaw"""
+def client_payments(request):
+    """Historia płatności klienta"""
     if not user_is_client(request.user):
         messages.error(request, 'Nie masz uprawnień do tej strony.')
         return redirect('home_page')
     
-    subscription = get_object_or_404(
-        Subscription, 
-        id=subscription_id, 
-        client=request.user
-    )
+    # Pobierz wszystkie płatności użytkownika
+    payments = Payment.objects.filter(
+        subscription__client=request.user
+    ).select_related('subscription__diet_plan').order_by('-created_at')
     
-    # Pobierz dostawy z ostatnich 30 dni
-    deliveries = Delivery.objects.filter(
-        subscription=subscription,
-        delivery_date__gte=date.today() - timedelta(days=30)
-    ).order_by('-delivery_date')
+    # Paginacja
+    paginator = Paginator(payments, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Oblicz statystyki
+    total_spent = payments.filter(status='completed').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
     
     context = {
-        'subscription': subscription,
-        'deliveries': deliveries,
+        'page_obj': page_obj,
+        'total_spent': total_spent,
+        'payments_count': payments.count(),
     }
     
-    return render(request, 'client/subscriptions/delivery_tracking.html', context)
+    return render(request, 'client/payments/list.html', context)
+
+def _calculate_daily_rate(plan, duration):
+    """Calculate daily rate for a diet plan and duration ('week', 'month', 'year')."""
+    if duration == 'week':
+        return float(plan.weekly_price) / 7
+    elif duration == 'month':
+        return float(plan.monthly_price) / 30
+    elif duration == 'year':
+        return float(plan.yearly_price) / 365
+    else:
+        return 0

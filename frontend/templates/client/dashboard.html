@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load dish_filters %}
 
 {% block title %}Panel użytkownika{% endblock title %}
 
@@ -10,8 +11,6 @@
             <h1 class="text-4xl font-bold text-gray-800 mb-2">Witaj, {{ user.first_name|default:user.username }}!</h1>
             <p class="text-gray-600">Zarządzaj swoimi subskrypcjami i odkrywaj nowe plany dietetyczne</p>
         </div>
-
-
 
         <!-- Quick Actions -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
@@ -42,7 +41,7 @@
                     </div>
                 </a>
 
-                <!-- Change Diet -->
+                <!-- My Subscriptions -->
                 <a href="{% url 'subscription_list' %}" 
                 class="group flex items-center p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl hover:from-purple-100 hover:to-purple-200 transition-all duration-200 hover:shadow-lg">
                     <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
@@ -54,15 +53,15 @@
                     </div>
                 </a>
 
-                <!-- Pause Subscription -->
-                <a href="#" 
-                class="group flex items-center p-6 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl hover:from-yellow-100 hover:to-yellow-200 transition-all duration-200 hover:shadow-lg opacity-50 cursor-not-allowed">
+                <!-- My Payments -->
+                <a href="{% url 'client_payments' %}" 
+                class="group flex items-center p-6 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl hover:from-yellow-100 hover:to-yellow-200 transition-all duration-200 hover:shadow-lg">
                     <div class="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                        <i data-lucide="pause" class="w-6 h-6 text-white"></i>
+                        <i data-lucide="credit-card" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800">Wstrzymaj subskrypcję</h3>
-                        <p class="text-sm text-gray-600">Wkrótce dostępne</p>
+                        <h3 class="text-lg font-semibold text-gray-800">Moje płatności</h3>
+                        <p class="text-sm text-gray-600">Historia transakcji</p>
                     </div>
                 </a>
 
@@ -80,41 +79,57 @@
                     <div class="p-6 border-b border-gray-100">
                         <div class="flex justify-between items-center">
                             <h3 class="text-xl font-bold text-gray-800">Aktywne subskrypcje</h3>
-                            <a href="#" class="text-green-600 hover:text-green-700 text-sm font-medium opacity-50 cursor-not-allowed">
+                            <a href="{% url 'subscription_list' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
                                 Zobacz wszystkie
                             </a>
                         </div>
                     </div>
                     
-                    {% if active_subscriptions > 0 %}
-                        <!-- Subscription placeholder -->
-                        <div class="p-6">
-                            <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h4 class="font-semibold text-gray-800">Plan Standard</h4>
-                                        <p class="text-sm text-gray-600">Miesiąc • Aktywny do 15.07.2025</p>
+                    {% if active_subscriptions %}
+                        <div class="p-6 space-y-4">
+                            {% for subscription in active_subscriptions %}
+                                <div class="bg-gray-50 rounded-xl p-4">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">{{ subscription.diet_plan.name }}</h4>
+                                            <p class="text-sm text-gray-600">{{ subscription.get_duration_display }} • Do {{ subscription.end_date|date:"d.m.Y" }}</p>
+                                        </div>
+                                        {% if subscription.status == 'active' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <i data-lucide="check" class="w-3 h-3 mr-1"></i>
+                                                Aktywna
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <i data-lucide="pause" class="w-3 h-3 mr-1"></i>
+                                                Wstrzymana
+                                            </span>
+                                        {% endif %}
                                     </div>
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        <i data-lucide="check" class="w-3 h-3 mr-1"></i>
-                                        Aktywny
-                                    </span>
+                                    <div class="flex justify-between items-center text-sm">
+                                        <span class="text-gray-600">Pozostało {{ subscription.end_date|timeuntil|cut:"," }}</span>
+                                        <a href="{% url 'subscription_detail' subscription.id %}" class="text-blue-600 hover:text-blue-700 font-medium">
+                                            Szczegóły →
+                                        </a>
+                                    </div>
                                 </div>
-                                <div class="flex justify-between items-center text-sm">
-                                    <span class="text-gray-600">Następna dostawa: Jutro, 8:00</span>
-                                    <span class="font-medium text-gray-800">549 zł/miesiąc</span>
+                            {% endfor %}
+                            
+                            {% if upcoming_deliveries %}
+                                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                                    <p class="text-sm text-blue-800">
+                                        <i data-lucide="truck" class="w-4 h-4 inline mr-1"></i>
+                                        Następna dostawa: <strong>{{ upcoming_deliveries.0.date|date:"l, d.m" }}</strong> w godz. {{ upcoming_deliveries.0.time }}
+                                    </p>
                                 </div>
-                            </div>
-                            <div class="text-center text-gray-500 text-sm">
-                                Funkcjonalność w przygotowaniu
-                            </div>
+                            {% endif %}
                         </div>
                     {% else %}
                         <div class="p-6 text-center">
                             <i data-lucide="calendar-x" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
                             <h4 class="text-lg font-medium text-gray-800 mb-2">Brak aktywnych subskrypcji</h4>
                             <p class="text-gray-600 mb-4">Zamów swój pierwszy plan dietetyczny</p>
-                            <a href="#" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors opacity-50 cursor-not-allowed">
+                            <a href="{% url 'browse_diet_plans' %}" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors">
                                 Przeglądaj plany
                             </a>
                         </div>
@@ -125,21 +140,40 @@
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100">
                         <div class="flex justify-between items-center">
-                            <h3 class="text-xl font-bold text-gray-800">Historia zamówień</h3>
-                            <a href="#" class="text-green-600 hover:text-green-700 text-sm font-medium opacity-50 cursor-not-allowed">
+                            <h3 class="text-xl font-bold text-gray-800">Ostatnie zamówienia</h3>
+                            <a href="{% url 'client_payments' %}" class="text-green-600 hover:text-green-700 text-sm font-medium">
                                 Zobacz wszystkie
                             </a>
                         </div>
                     </div>
                     
-                    <div class="p-6 text-center">
-                        <i data-lucide="package" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
-                        <h4 class="text-lg font-medium text-gray-800 mb-2">Brak historii zamówień</h4>
-                        <p class="text-gray-600 mb-4">Twoje przyszłe zamówienia pojawią się tutaj</p>
-                        <div class="text-center text-gray-500 text-sm">
-                            Funkcjonalność w przygotowaniu
+                    {% if recent_orders %}
+                        <div class="divide-y divide-gray-100">
+                            {% for order in recent_orders %}
+                                <div class="p-4 hover:bg-gray-50 transition-colors">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="font-medium text-gray-800">{{ order.subscription.diet_plan.name }}</p>
+                                            <p class="text-sm text-gray-600">{{ order.payment_date|date:"d.m.Y H:i" }}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-medium text-gray-800">{{ order.amount }} zł</p>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <i data-lucide="check" class="w-3 h-3 mr-1"></i>
+                                                Opłacone
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
-                    </div>
+                    {% else %}
+                        <div class="p-6 text-center">
+                            <i data-lucide="package" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                            <h4 class="text-lg font-medium text-gray-800 mb-2">Brak historii zamówień</h4>
+                            <p class="text-gray-600">Twoje przyszłe zamówienia pojawią się tutaj</p>
+                        </div>
+                    {% endif %}
                 </div>
 
             </div>
@@ -157,12 +191,16 @@
                     <div class="mb-4">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm opacity-90">Twój poziom</span>
-                            <span class="text-sm font-medium">{{ loyalty_level|default:"Bronze" }}</span>
+                            <span class="text-sm font-medium">{{ loyalty_level }}</span>
                         </div>
                         <div class="w-full bg-white/20 rounded-full h-2">
-                            <div class="bg-white h-2 rounded-full" style="width: 30%"></div>
+                            <div class="bg-white h-2 rounded-full transition-all duration-500" style="width: {{ progress_percentage }}%"></div>
                         </div>
-                        <p class="text-xs opacity-75 mt-1">70 punktów do następnego poziomu</p>
+                        {% if next_level_points > 0 %}
+                            <p class="text-xs opacity-75 mt-1">{{ next_level_points }} punktów do następnego poziomu</p>
+                        {% else %}
+                            <p class="text-xs opacity-75 mt-1">Osiągnięto najwyższy poziom!</p>
+                        {% endif %}
                     </div>
                     
                     <div class="space-y-2 text-sm">
@@ -172,13 +210,23 @@
                         </div>
                         <div class="flex justify-between">
                             <span>Wartość punktów:</span>
-                            <span class="font-semibold">{{ loyalty_value }}zł</span>
+                            <span class="font-semibold">{{ loyalty_value }} zł</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Zebrane punkty:</span>
+                            <span class="font-semibold">{{ loyalty_account.total_points_earned }} pkt</span>
                         </div>
                     </div>
                     
-                    <a href="#" class="block w-full bg-white/20 hover:bg-white/30 text-center py-2 rounded-lg mt-4 transition-colors opacity-50 cursor-not-allowed">
-                        Wykorzystaj punkty
-                    </a>
+                    {% if loyalty_points >= 100 %}
+                        <a href="{% url 'subscription_list' %}" class="block w-full bg-white/20 hover:bg-white/30 text-center py-2 rounded-lg mt-4 transition-colors">
+                            Wykorzystaj punkty
+                        </a>
+                    {% else %}
+                        <div class="text-center text-xs opacity-75 mt-4">
+                            Zbierz min. 100 punktów aby je wykorzystać
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- Referral Program -->
@@ -187,35 +235,60 @@
                     <p class="text-sm opacity-90 mb-4">
                         Otrzymaj 100 punktów za każdego poleconego znajomego!
                     </p>
+                    
                     <div class="bg-white/20 rounded-lg p-3 mb-4">
                         <div class="flex justify-between items-center">
                             <span class="text-sm">Twój kod:</span>
-                            <span class="font-bold">{{ referral_code|default:"USER123" }}</span>
+                            <span class="font-bold font-mono tracking-wider">{{ referral_code }}</span>
                         </div>
                     </div>
-                    <a href="#" class="block text-center bg-white/20 hover:bg-white/30 py-2 rounded-lg transition-colors opacity-50 cursor-not-allowed">
-                        Udostępnij kod
-                    </a>
+                    
+                    <div class="text-sm opacity-90 mb-4">
+                        <i data-lucide="users" class="w-4 h-4 inline mr-1"></i>
+                        Poleciłeś już: <strong>{{ referrals_count }}</strong> osób
+                    </div>
+                    
+                    <button onclick="copyReferralCode('{{ referral_code }}')" 
+                            class="block w-full text-center bg-white/20 hover:bg-white/30 py-2 rounded-lg transition-colors">
+                        <i data-lucide="copy" class="w-4 h-4 inline mr-1"></i>
+                        Skopiuj kod
+                    </button>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Twoje statystyki</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Aktywne subskrypcje</span>
+                            <span class="font-medium text-gray-800">{{ active_subscriptions.count }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Zamówień w sumie</span>
+                            <span class="font-medium text-gray-800">{{ recent_orders.count }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Zaoszczędzone</span>
+                            <span class="font-medium text-gray-800">{{ total_saved }} zł</span>
+                        </div>
+                    </div>
                 </div>
 
             </div>
         </div>
 
         <!-- Call to Action -->
-        {% if active_subscriptions == 0 %}
+        {% if active_subscriptions.count == 0 %}
             <div class="mt-12 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl p-8 text-white text-center">
                 <h2 class="text-3xl font-bold mb-4">Rozpocznij swoją przygodę ze zdrowym odżywianiem!</h2>
                 <p class="text-lg mb-6 opacity-90">
                     Zamów swój pierwszy plan dietetyczny i otrzymaj 50 punktów lojalnościowych za darmo
                 </p>
-                <a href="#" 
-                   class="inline-flex items-center bg-white text-gray-800 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-105 opacity-50 cursor-not-allowed">
+                <a href="{% url 'browse_diet_plans' %}" 
+                   class="inline-flex items-center bg-white text-gray-800 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-105">
                     Wybierz plan dietetyczny
                     <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
                 </a>
-                <div class="mt-4 text-sm opacity-75">
-                    Funkcjonalność wkrótce dostępna
-                </div>
             </div>
         {% endif %}
     </div>
@@ -233,6 +306,25 @@ document.addEventListener('DOMContentLoaded', function() {
         card.classList.add('animate-fade-in');
     });
 });
+
+// Funkcja kopiowania kodu polecającego
+function copyReferralCode(code) {
+    navigator.clipboard.writeText(code).then(function() {
+        // Pokaż powiadomienie
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i data-lucide="check" class="w-4 h-4 inline mr-1"></i>Skopiowano!';
+        button.classList.add('bg-white/40');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('bg-white/40');
+            lucide.createIcons();
+        }, 2000);
+    }).catch(function(err) {
+        alert('Nie udało się skopiować kodu: ' + err);
+    });
+}
 </script>
 
 <style>

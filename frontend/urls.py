@@ -24,8 +24,9 @@ urlpatterns = [
     path('subscriptions/<uuid:subscription_id>/pause/', views.subscription_pause, name='subscription_pause'),
     path('subscriptions/<uuid:subscription_id>/cancel/', views.subscription_cancel, name='subscription_cancel'),
     path('subscriptions/<uuid:subscription_id>/change-diet/', views.diet_change, name='diet_change'),
-    path('subscriptions/<uuid:subscription_id>/deliveries/', views.delivery_tracking, name='delivery_tracking'),
     
+    path('my-payments/', views.client_payments, name='client_payments'),
+
     # Panel zarządzania
     path('manage/', views.manage_dashboard, name='manage_dashboard'),
     
