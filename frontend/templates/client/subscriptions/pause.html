@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Wstrzymaj subskrypcję{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{% url 'subscription_detail' subscription.id %}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Powrót do subskrypcji
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="pause-circle" class="w-8 h-8 text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Wstrzymaj subskrypcję</h1>
+            <p class="text-gray-600">
+                Wyjeżdżasz na wakacje? Możesz wstrzymać dostawy na czas nieobecności.
+            </p>
+        </div>
+
+        <!-- Subscription Info -->
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-blue-800 mb-1">{{ subscription.diet_plan.name }}</h3>
+                    <p class="text-sm text-blue-600">{{ subscription.get_duration_display }} • {{ subscription.total_amount }} zł</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-blue-600">Koniec subskrypcji:</p>
+                    <p class="font-medium text-blue-800">{{ subscription.end_date|date:"d.m.Y" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause Form -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">Okres wstrzymania</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="{{ form.pause_start_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            {{ form.pause_start_date.label }}
+                        </label>
+                        {{ form.pause_start_date }}
+                        {% if form.pause_start_date.errors %}
+                            <div class="text-red-500 text-sm mt-1">{{ form.pause_start_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.pause_end_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            {{ form.pause_end_date.label }}
+                        </label>
+                        {{ form.pause_end_date }}
+                        {% if form.pause_end_date.errors %}
+                            <div class="text-red-500 text-sm mt-1">{{ form.pause_end_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="{{ form.pause_reason.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ form.pause_reason.label }}
+                    </label>
+                    {{ form.pause_reason }}
+                    {% if form.pause_reason.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.pause_reason.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Summary -->
+                <div class="mt-6 bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Podsumowanie</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Liczba dni pauzy:</span>
+                            <span class="font-medium pause-days">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Nowa data zakończenia:</span>
+                            <span class="font-medium new-end-date">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Anulowane dostawy:</span>
+                            <span class="font-medium cancelled-deliveries">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Info -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 mb-8">
+                <h3 class="font-semibold text-yellow-800 mb-3 flex items-center">
+                    <i data-lucide="info" class="w-5 h-5 mr-2"></i>
+                    Ważne informacje
+                </h3>
+                <ul class="space-y-2 text-sm text-yellow-700">
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
+                        <span>Maksymalny czas pauzy to 30 dni</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
+                        <span>Subskrypcja zostanie automatycznie przedłużona o liczbę dni pauzy</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
+                        <span>Dostawy zostaną wznowione automatycznie po zakończeniu pauzy</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="w-4 h-4 mr-2 mt-0.5"></i>
+                        <span>Pauzę należy zgłosić minimum 24 godziny wcześniej</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'subscription_detail' subscription.id %}" 
+                   class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                    <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
+                    Anuluj
+                </a>
+                <button type="submit" 
+                        class="px-8 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <i data-lucide="pause" class="w-4 h-4 inline mr-2"></i>
+                    Wstrzymaj subskrypcję
+                </button>
+            </div>
+            
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-sm text-center mt-4">
+                    {{ form.non_field_errors.0 }}
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    
+    const startDateInput = document.getElementById('{{ form.pause_start_date.id_for_label }}');
+    const endDateInput = document.getElementById('{{ form.pause_end_date.id_for_label }}');
+    const pauseDaysDisplay = document.querySelector('.pause-days');
+    const newEndDateDisplay = document.querySelector('.new-end-date');
+    const cancelledDeliveriesDisplay = document.querySelector('.cancelled-deliveries');
+    
+    const subscriptionEndDate = new Date('{{ subscription.end_date|date:"Y-m-d" }}');
+    
+    function updateSummary() {
+        const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
+        const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
+        
+        if (startDate && endDate && endDate >= startDate) {
+            // Calculate pause days
+            const pauseDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            pauseDaysDisplay.textContent = pauseDays + ' dni';
+            
+            // Calculate new end date
+            const newEndDate = new Date(subscriptionEndDate);
+            newEndDate.setDate(newEndDate.getDate() + pauseDays);
+            newEndDateDisplay.textContent = newEndDate.toLocaleDateString('pl-PL');
+            
+            // Estimate cancelled deliveries (3 per week)
+            const cancelledDeliveries = Math.ceil(pauseDays / 7 * 3);
+            cancelledDeliveriesDisplay.textContent = '~' + cancelledDeliveries + ' dostaw';
+        } else {
+            pauseDaysDisplay.textContent = '-';
+            newEndDateDisplay.textContent = '-';
+            cancelledDeliveriesDisplay.textContent = '-';
+        }
+    }
+    
+    startDateInput.addEventListener('change', updateSummary);
+    endDateInput.addEventListener('change', updateSummary);
+    
+    // Validate dates
+    startDateInput.addEventListener('change', function() {
+        if (endDateInput.value && new Date(this.value) > new Date(endDateInput.value)) {
+            endDateInput.value = this.value;
+        }
+        endDateInput.min = this.value;
+    });
+    
+    // Initial update
+    updateSummary();
+});
+</script>
+{% endblock content %}

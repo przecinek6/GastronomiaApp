@@ -1423,11 +1423,45 @@ def subscription_pause(request, subscription_id):
     if request.method == 'POST':
         form = PauseSubscriptionForm(request.POST)
         if form.is_valid():
-            # TODO: Implementacja pauzowania
-            messages.info(request, 'Funkcja pauzowania będzie dostępna wkrótce.')
-            return redirect('subscription_detail', subscription_id=subscription.id)
+            try:
+                with transaction.atomic():
+                    pause_start = form.cleaned_data['pause_start_date']
+                    pause_end = form.cleaned_data['pause_end_date']
+                    
+                    # Sprawdź czy daty pauzy mieszczą się w okresie subskrypcji
+                    if pause_start > subscription.end_date:
+                        messages.error(request, 'Data rozpoczęcia pauzy wykracza poza okres subskrypcji.')
+                        return redirect('subscription_detail', subscription_id=subscription.id)
+                    
+                    # Ustaw status na wstrzymany
+                    subscription.status = 'paused'
+                    
+                    # Przedłuż subskrypcję o dni pauzy
+                    pause_days = (pause_end - pause_start).days + 1
+                    subscription.end_date += timedelta(days=pause_days)
+                    
+                    subscription.save()
+                    
+                    # Zapisz informację o pauzie (można dodać model PauseHistory jeśli potrzebny)
+                    messages.success(request, f'Subskrypcja została wstrzymana od {pause_start.strftime("%d.%m.%Y")} do {pause_end.strftime("%d.%m.%Y")}.')
+                    
+                    # Anuluj dostawy w okresie pauzy
+                    Delivery.objects.filter(
+                        subscription=subscription,
+                        delivery_date__gte=pause_start,
+                        delivery_date__lte=pause_end,
+                        status__in=['preparing', 'ready']
+                    ).update(status='cancelled')
+                    
+                    return redirect('subscription_detail', subscription_id=subscription.id)
+                    
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas pauzowania subskrypcji: {str(e)}')
     else:
-        form = PauseSubscriptionForm()
+        # Ustaw domyślną datę rozpoczęcia pauzy na jutro
+        form = PauseSubscriptionForm(initial={
+            'pause_start_date': date.today() + timedelta(days=1)
+        })
     
     context = {
         'form': form,
