@@ -149,22 +149,6 @@ if not DEBUG:
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Static files directories
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-# Authentication backends
-AUTHENTICATION_BACKENDS = [
-    'backend.authentication.EmailOrUsernameModelBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]
-
-# Login/Logout URLs
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
 # Messages framework
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
