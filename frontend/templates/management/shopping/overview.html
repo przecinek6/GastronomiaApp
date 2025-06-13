@@ -1,0 +1,94 @@
+<!-- frontend/templates/management/shopping/overview.html -->
+{% extends "base.html" %}
+
+{% block title %}Lista zakupów{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Lista zakupów</h1>
+            </div>
+            <a href="{% url 'manage_dashboard' %}" 
+               class="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-200">
+                <i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i>
+                Powrot do panelu
+            </a>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-green-200 text-green-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-700{% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %} border rounded-lg p-4 mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Weeks List -->
+        {% if weeks_data %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-800">Tygodnie z aktywnymi subskrypcjami</h2>
+                </div>
+
+                <div class="divide-y divide-gray-200">
+                    {% for week in weeks_data %}
+                        <div class="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                                            <span class="text-white font-bold text-lg">{{ week.week_number }}</span>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-800">
+                                                {{ week.week_display }}
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-3">
+                                    <!-- Preview Button -->
+                                    <a href="{% url 'shopping_list_preview' week.week_start.year week.week_start.month week.week_start.day %}"
+                                       class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-200 transition-colors duration-200">
+                                        <i data-lucide="eye" class="w-4 h-4 inline mr-2"></i>
+                                        Podgląd
+                                    </a>
+
+                                    <!-- PDF Button -->
+                                    <a href=""
+                                       class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                                        <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                                        PDF
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="shopping-cart" class="w-12 h-12 text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Brak aktywnych subskrypcji</h3>
+                <p class="text-gray-600 mb-6">Nie ma żadnych aktywnych subskrypcji, dla których trzeba generować listy zakupów.</p>
+                <a href="{% url 'manage_dashboard' %}" 
+                   class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors duration-200">
+                    Powrót do panelu zarządzania
+                </a>
+            </div>
+        {% endif %}
+
+
+    </div>
+</section>
+{% endblock content %}

@@ -10,8 +10,14 @@ from django.views.decorators.http import require_GET
 from frontend.models import UserProfile, Ingredient, Dish, DishIngredient, DietPlan, MealPlan, Subscription, DietChange, Payment, Delivery, ReferralProgram
 from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet, DietPlanForm, SubscriptionForm, PauseSubscriptionForm, ChangeDietForm
 import traceback
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
+from .shopping_utils import (
+    get_week_ranges_for_subscriptions, 
+    calculate_ingredients_for_week,
+    format_week_display,
+    get_week_number_in_month
+)
 
 User = get_user_model()
 
@@ -1698,3 +1704,88 @@ def _calculate_daily_rate(plan, duration):
         return float(plan.yearly_price) / 365
     else:
         return 0
+
+@login_required
+def shopping_list_overview(request):
+    """
+    Strona z przegldem wszystkich tygodni dla ktorych trzeba generowac listy zakupow
+    """
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    # Pobierz zakresy tygodni z aktywnymi subskrypcjami
+    week_ranges = get_week_ranges_for_subscriptions()
+    
+    # Przygotuj dane dla szablonu
+    weeks_data = []
+    for week_start, week_end in week_ranges:
+        week_number = get_week_number_in_month(week_start)
+        month_year = week_start.strftime('%B %Y')
+        
+        # Przelicz na polski miesiac
+        polish_months = {
+            'January': 'Styczeń', 'February': 'Luty', 'March': 'Marzec',
+            'April': 'Kwiecień', 'May': 'Maj', 'June': 'Czerwiec',
+            'July': 'Lipiec', 'August': 'Sierpień', 'September': 'Wrzesień',
+            'October': 'Październik', 'November': 'Listopad', 'December': 'Grudzień'
+        }
+        
+        english_month = week_start.strftime('%B')
+        polish_month = polish_months.get(english_month, english_month)
+        month_year_polish = f"{polish_month} {week_start.year}"
+        
+        weeks_data.append({
+            'week_start': week_start,
+            'week_end': week_end,
+            'week_display': format_week_display(week_start, week_end),
+            'week_number': week_number,
+            'month_year': month_year_polish,
+        })
+    
+    context = {
+        'weeks_data': weeks_data,
+        'total_weeks': len(weeks_data),
+    }
+    
+    return render(request, 'management/shopping/overview.html', context)
+
+@login_required
+def shopping_list_preview(request, year, month, day):
+    """
+    Podglad listy zakupow przed wygenerowaniem PDF
+    """
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    try:
+        week_start = datetime(year, month, day).date()
+    except ValueError:
+        messages.error(request, 'Nieprawidłowa data.')
+        return redirect('shopping_list_overview')
+    
+    week_end = week_start + timedelta(days=6)
+    
+    # Oblicz skladniki
+    ingredients_data = calculate_ingredients_for_week(week_start, week_end)
+    
+    # Przygotuj dane dla szablonu
+    sorted_ingredients = []
+    if ingredients_data:
+        for item in sorted(ingredients_data.values(), key=lambda x: x['ingredient'].name):
+            item['total_kilos'] = item['total_grams'] / 1000
+            sorted_ingredients.append(item)
+    
+    total_cost = sum(item['total_cost'] for item in ingredients_data.values())
+    
+    context = {
+        'week_start': week_start,
+        'week_end': week_end,
+        'week_display': format_week_display(week_start, week_end),
+        'ingredients': sorted_ingredients,
+        'total_cost': total_cost,
+        'ingredients_count': len(sorted_ingredients),
+    }
+    
+    return render(request, 'management/shopping/preview.html', context)

@@ -48,6 +48,10 @@ urlpatterns = [
     path('manage/diet-plans/<int:pk>/edit/', views.diet_plan_edit, name='diet_plan_edit'),
     path('manage/diet-plans/<int:pk>/delete/', views.diet_plan_delete, name='diet_plan_delete'),
 
+    # Zarzadzanie zakupami
+    path('manage/shopping/', views.shopping_list_overview, name='shopping_list_overview'),
+    path('manage/shopping/preview/<int:year>/<int:month>/<int:day>/', views.shopping_list_preview, name='shopping_list_preview'),
+
     # API endpointy
     path('api/ingredient/<int:ingredient_id>/', views.ingredient_data_api, name='ingredient_data_api'),
     path('api/ingredients/', views.ingredients_list_api, name='ingredients_list_api'),
