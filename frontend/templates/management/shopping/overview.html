@@ -62,7 +62,7 @@
                                     </a>
 
                                     <!-- PDF Button -->
-                                    <a href=""
+                                    <a href="{% url 'shopping_list_pdf' week.week_start.year week.week_start.month week.week_start.day %}"
                                        class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg">
                                         <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
                                         PDF

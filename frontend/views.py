@@ -1,17 +1,44 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-from django.db.models import Q, Sum
-from django.db import transaction
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from frontend.models import UserProfile, Ingredient, Dish, DishIngredient, DietPlan, MealPlan, Subscription, DietChange, Payment, Delivery, ReferralProgram
-from frontend.forms import CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, DishIngredientFormSet, DietPlanForm, SubscriptionForm, PauseSubscriptionForm, ChangeDietForm
+# Standardowe biblioteki Python
+import os
 import traceback
 from datetime import date, timedelta, datetime
 
+# Django - podstawowe
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Q, Sum
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET
+
+# ReportLab - generowanie PDF
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+# Lokalne importy - modele
+from frontend.models import (
+    UserProfile, Ingredient, Dish, DishIngredient, DietPlan, 
+    MealPlan, Subscription, DietChange, Payment, Delivery, ReferralProgram
+)
+
+# Lokalne importy - formularze
+from frontend.forms import (
+    CustomRegistrationForm, CustomLoginForm, IngredientForm, DishForm, 
+    DishIngredientFormSet, DietPlanForm, SubscriptionForm, 
+    PauseSubscriptionForm, ChangeDietForm
+)
+
+# Lokalne importy - utilities
 from .shopping_utils import (
     get_week_ranges_for_subscriptions, 
     calculate_ingredients_for_week,
@@ -1789,3 +1816,173 @@ def shopping_list_preview(request, year, month, day):
     }
     
     return render(request, 'management/shopping/preview.html', context)
+
+@login_required
+def shopping_list_pdf(request, year, month, day):
+    """
+    Generuje plik PDF z listą zakupów na dany tydzień
+    """
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    try:
+        week_start = datetime(year, month, day).date()
+    except ValueError:
+        messages.error(request, 'Nieprawidłowa data.')
+        return redirect('shopping_list_overview')
+    
+    week_end = week_start + timedelta(days=6)
+    ingredients_data = calculate_ingredients_for_week(week_start, week_end)
+    
+    if not ingredients_data:
+        messages.warning(request, 'Brak składników do wygenerowania PDF dla tego tygodnia.')
+        return redirect('shopping_list_overview')
+    
+    # Tworzenie odpowiedzi HTTP z plikiem PDF
+    week_display = format_week_display(week_start, week_end)
+    filename = f"Lista zakupów_{week_start.strftime('%Y_%m_%d')}.pdf"
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # Rejestracja fontu wspierającego polskie znaki
+    try:
+        # Użyj fontu z projektu (zalecane)
+        font_path = os.path.join(settings.STATIC_ROOT or settings.BASE_DIR, 'fonts', 'DejaVuSans.ttf')
+        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+        font_name = 'DejaVuSans'
+
+    except Exception as e:
+        font_name = 'Helvetica'
+    
+    # Tworzenie dokumentu PDF
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=A4,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=18,
+        title="Lista zakupów",  # Tytuł dokumentu w metadanych
+        author="System Gastronomia",
+        subject=f"Lista zakupów na tydzień {week_display}",
+        creator="System Gastronomia"
+    )
+    
+    # Kontener na elementy
+    story = []
+    
+    # Style
+    styles = getSampleStyleSheet()
+    
+    # Tworzenie niestandardowych stylów z obsługą polskich znaków
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontName=font_name,
+        fontSize=18,
+        spaceAfter=30,
+        alignment=1,  # wyśrodkowane
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontName=font_name,
+        fontSize=12,
+        spaceAfter=20,
+        alignment=1,  # wyśrodkowane
+    )
+    
+    # Tytuł
+    title = Paragraph("Lista zakupów", title_style)
+    story.append(title)
+    
+    # Podtytuł z datami
+    subtitle = Paragraph(f"Tydzień: {week_display}", subtitle_style)
+    story.append(subtitle)
+    
+    # Odstęp
+    story.append(Spacer(1, 20))
+    
+    # Sortowanie składników alfabetycznie i przygotowanie danych dla tabeli
+    table_data = [
+        ['Składnik', 'Ilość (g)', 'Ilość (kg)', 'Koszt (zł)']
+    ]
+    
+    total_cost = 0
+    
+    # Sortuj składniki według nazwy
+    sorted_items = sorted(ingredients_data.items(), key=lambda x: x[1]['ingredient'].name)
+    
+    for ingredient_id, item in sorted_items:
+        ingredient_name = item['ingredient'].name
+        total_quantity_g = float(item['total_grams'])
+        total_quantity_kg = total_quantity_g / 1000
+        cost = float(item['total_cost'])
+        total_cost += cost
+        
+        table_data.append([
+            ingredient_name,
+            f"{total_quantity_g:.0f}",
+            f"{total_quantity_kg:.2f}",
+            f"{cost:.2f}"
+        ])
+    
+    # Dodanie wiersza z sumą
+    table_data.append([
+        'RAZEM',
+        '',
+        '',
+        f"{total_cost:.2f}"
+    ])
+    
+    # Tworzenie tabeli
+    table = Table(table_data, colWidths=[3*inch, 1*inch, 1*inch, 1*inch])
+    
+    # Style tabeli
+    table.setStyle(TableStyle([
+        # Nagłówek
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), font_name),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        
+        # Pozostałe wiersze
+        ('FONTNAME', (0, 1), (-1, -2), font_name),
+        ('FONTSIZE', (0, 1), (-1, -2), 10),
+        ('ALIGN', (0, 1), (0, -2), 'LEFT'),  # Nazwa składnika wyrównana do lewej
+        ('GRID', (0, 0), (-1, -2), 1, colors.black),
+        
+        # Wiersz z sumą
+        ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+        ('FONTNAME', (0, -1), (-1, -1), font_name),
+        ('FONTSIZE', (0, -1), (-1, -1), 12),
+        ('FONTWEIGHT', (0, -1), (-1, -1), 'BOLD'),
+        ('GRID', (0, -1), (-1, -1), 1, colors.black),
+    ]))
+    
+    story.append(table)
+    
+    # Dodanie daty wygenerowania
+    story.append(Spacer(1, 30))
+    
+    generation_date = Paragraph(
+        f"Wygenerowano: {datetime.now().strftime('%d.%m.%Y %H:%M')} przez GastronomiaApp.",
+        ParagraphStyle(
+            'GenerationDate',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=8,
+            alignment=2,  # wyrównane do prawej
+        )
+    )
+    story.append(generation_date)
+    
+    # Budowanie PDF
+    doc.build(story)
+    
+    return response

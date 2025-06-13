@@ -51,6 +51,7 @@ urlpatterns = [
     # Zarzadzanie zakupami
     path('manage/shopping/', views.shopping_list_overview, name='shopping_list_overview'),
     path('manage/shopping/preview/<int:year>/<int:month>/<int:day>/', views.shopping_list_preview, name='shopping_list_preview'),
+    path('manage/shopping/pdf/<int:year>/<int:month>/<int:day>/', views.shopping_list_pdf, name='shopping_list_pdf'),
 
     # API endpointy
     path('api/ingredient/<int:ingredient_id>/', views.ingredient_data_api, name='ingredient_data_api'),
