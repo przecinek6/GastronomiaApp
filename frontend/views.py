@@ -728,7 +728,7 @@ def client_dashboard(request):
         messages.error(request, 'Nie masz uprawnień do tej strony.')
         return redirect('home_page')
     
-    # Pobierz dane klienta
+    # Pobierz dane klienta dla programu lojalnościowego
     try:
         loyalty_account = request.user.loyaltyaccount
     except:
@@ -747,16 +747,9 @@ def client_dashboard(request):
         status__in=['active', 'paused']
     ).select_related('diet_plan').order_by('-created_at')
     
-    # Pobierz ostatnie zamówienia/płatności
-    recent_orders = Payment.objects.filter(
-        subscription__client=request.user,
-        status='completed'
-    ).select_related('subscription__diet_plan').order_by('-created_at')[:5]
-    
-    # Pobierz nadchodzące dostawy (dla aktywnych subskrypcji)
+    # Pobierz nadchodzące dostawy (symulacja - możesz dostosować do swojego modelu)
     upcoming_deliveries = []
-    for sub in active_subscriptions:
-        # Symuluj najbliższą dostawę
+    for sub in active_subscriptions[:1]:  # Tylko dla pierwszej aktywnej
         next_delivery = date.today() + timedelta(days=1)
         if next_delivery.weekday() == 6:  # Niedziela
             next_delivery += timedelta(days=1)
@@ -785,26 +778,19 @@ def client_dashboard(request):
     elif loyalty_account.loyalty_level == 'silver':
         next_level_points = 1000
         progress_percentage = min(100, ((loyalty_account.total_points_earned - 500) / 500) * 100)
-    elif loyalty_account.loyalty_level == 'gold':
-        next_level_points = 2000
-        progress_percentage = min(100, ((loyalty_account.total_points_earned - 1000) / 1000) * 100)
-    else:  # platinum
-        next_level_points = 0
+    else:  # gold/platinum
         progress_percentage = 100
     
     context = {
         'active_subscriptions': active_subscriptions,
-        'recent_orders': recent_orders,
         'upcoming_deliveries': upcoming_deliveries,
         'loyalty_account': loyalty_account,
         'loyalty_points': loyalty_account.points_balance,
-        'loyalty_level': loyalty_account.get_loyalty_level_display(),
+        'loyalty_level': loyalty_account.get_loyalty_level_display() if hasattr(loyalty_account, 'get_loyalty_level_display') else 'Bronze',
         'loyalty_value': loyalty_value,
         'progress_percentage': int(progress_percentage),
-        'next_level_points': next_level_points - loyalty_account.total_points_earned if next_level_points > 0 else 0,
         'referral_code': referral_code,
         'referrals_count': referrals_count,
-        'total_saved': 0,  # TODO: Obliczać na podstawie wykorzystanych punktów
     }
     
     return render(request, 'client/dashboard.html', context)
@@ -1334,35 +1320,6 @@ def ingredients_list_api(request):
 # ==========================================
 # MODUŁ ZAMÓWIEŃ I SUBSKRYPCJI
 # ==========================================
-
-@login_required
-def subscription_list(request):
-    """Lista subskrypcji klienta"""
-    if not user_is_client(request.user):
-        messages.error(request, 'Nie masz uprawnień do tej strony.')
-        return redirect('home_page')
-    
-    # Pobierz subskrypcje użytkownika
-    subscriptions = Subscription.objects.filter(
-        client=request.user
-    ).select_related('diet_plan').order_by('-created_at')
-    
-    # Podziel na aktywne i historyczne
-    active_subscriptions = []
-    historical_subscriptions = []
-    
-    for sub in subscriptions:
-        if sub.status in ['active', 'paused']:
-            active_subscriptions.append(sub)
-        else:
-            historical_subscriptions.append(sub)
-    
-    context = {
-        'active_subscriptions': active_subscriptions,
-        'historical_subscriptions': historical_subscriptions,
-    }
-    
-    return render(request, 'client/subscriptions/list.html', context)
 
 
 @login_required

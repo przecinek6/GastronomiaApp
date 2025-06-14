@@ -8,7 +8,7 @@
         
         <!-- Back Button -->
         <div class="mb-6">
-            <a href="{% url 'subscription_list' %}" 
+            <a href="{% url 'client_dashboard' %}" 
                class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
                 Powrót do listy subskrypcji
@@ -79,11 +79,11 @@
                         <span class="font-medium text-yellow-800">Wstrzymaj</span>
                     </a>
                     
-                    <a href="{% url 'delivery_tracking' subscription.id %}" 
+                    {% comment %} <a href="{% url 'delivery_tracking' subscription.id %}" 
                        class="flex items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                         <i data-lucide="truck" class="w-5 h-5 text-blue-600 mr-2"></i>
                         <span class="font-medium text-blue-800">Śledź dostawy</span>
-                    </a>
+                    </a> {% endcomment %}
                     
                     <a href="{% url 'subscription_cancel' subscription.id %}" 
                        class="flex items-center justify-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
@@ -213,10 +213,10 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <a href="{% url 'delivery_tracking' subscription.id %}" 
+                            {% comment %} <a href="{% url 'delivery_tracking' subscription.id %}" 
                                class="block text-center text-blue-600 hover:text-blue-700 text-sm mt-4">
                                 Zobacz wszystkie dostawy →
-                            </a>
+                            </a> {% endcomment %}
                         {% else %}
                             <p class="text-gray-600 text-sm">Brak zaplanowanych dostaw</p>
                         {% endif %}

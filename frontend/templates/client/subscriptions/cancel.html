@@ -134,31 +134,6 @@
             </form>
         </div>
 
-        <!-- Warning -->
-        <div class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8">
-            <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center">
-                <i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i>
-                Uwaga
-            </h3>
-            <ul class="space-y-2 text-sm text-red-700">
-                <li class="flex items-start">
-                    <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
-                    <span>Anulowanie subskrypcji jest nieodwracalne</span>
-                </li>
-                <li class="flex items-start">
-                    <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
-                    <span>Wszystkie zaplanowane dostawy zostaną anulowane</span>
-                </li>
-                <li class="flex items-start">
-                    <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
-                    <span>Stracisz dostęp do specjalnych ofert dla stałych klientów</span>
-                </li>
-                <li class="flex items-start">
-                    <i data-lucide="x" class="w-4 h-4 mr-2 mt-0.5"></i>
-                    <span>Punkty lojalnościowe pozostaną na Twoim koncie</span>
-                </li>
-            </ul>
-        </div>
 
         <!-- Refund Type Selection -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
@@ -196,41 +171,6 @@
                 <i data-lucide="x-circle" class="w-4 h-4 inline mr-2"></i>
                 Anuluj subskrypcję
             </button>
-        </div>
-
-        <!-- Alternative Options -->
-        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-2xl p-6">
-            <h3 class="text-lg font-bold text-blue-800 mb-3 flex items-center">
-                <i data-lucide="lightbulb" class="w-5 h-5 mr-2"></i>
-                Czy rozważyłeś inne opcje?
-            </h3>
-            <ul class="space-y-3 text-sm text-blue-700">
-                <li class="flex items-start">
-                    <i data-lucide="pause" class="w-4 h-4 mr-2 mt-0.5"></i>
-                    <div>
-                        <span class="font-medium">Wstrzymanie subskrypcji</span> - możesz czasowo wstrzymać dostawy (np. na czas wakacji)
-                        <a href="{% url 'subscription_pause' subscription.id %}" class="text-blue-800 underline ml-2">Wstrzymaj</a>
-                    </div>
-                </li>
-                <li class="flex items-start">
-                    <i data-lucide="repeat" class="w-4 h-4 mr-2 mt-0.5"></i>
-                    <div>
-                        <span class="font-medium">Zmiana planu</span> - może inny plan będzie lepiej odpowiadał Twoim potrzebom?
-                        {% if subscription.can_change_diet %}
-                            <a href="{% url 'diet_change' subscription.id %}" class="text-blue-800 underline ml-2">Zmień plan</a>
-                        {% else %}
-                            <span class="text-blue-600 ml-2">(limit zmian wyczerpany)</span>
-                        {% endif %}
-                    </div>
-                </li>
-                <li class="flex items-start">
-                    <i data-lucide="message-circle" class="w-4 h-4 mr-2 mt-0.5"></i>
-                    <div>
-                        <span class="font-medium">Kontakt z nami</span> - może możemy jakoś pomóc?
-                        <a href="{% url 'home_page' %}#contact" class="text-blue-800 underline ml-2">Skontaktuj się</a>
-                    </div>
-                </li>
-            </ul>
         </div>
     </div>
 </section>

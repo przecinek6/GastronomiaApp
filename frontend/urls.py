@@ -18,7 +18,6 @@ urlpatterns = [
     path('plans/compare/', views.compare_diet_plans, name='compare_diet_plans'),
 
     # Moduł subskrypcji klienta
-    path('subscriptions/', views.subscription_list, name='subscription_list'),
     path('subscriptions/<uuid:subscription_id>/', views.subscription_detail, name='subscription_detail'),
     path('subscriptions/create/<int:plan_id>/', views.subscription_create, name='subscription_create'),
     path('subscriptions/<uuid:subscription_id>/pause/', views.subscription_pause, name='subscription_pause'),
