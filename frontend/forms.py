@@ -295,7 +295,7 @@ DishIngredientFormSet = forms.formset_factory(
 class DietPlanForm(forms.ModelForm):
     class Meta:
         model = DietPlan
-        fields = ['name', 'description', 'weekly_price', 'is_active']
+        fields = ['name', 'description', 'image', 'weekly_price', 'is_active']  # Dodano 'image'
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -312,6 +312,12 @@ class DietPlanForm(forms.ModelForm):
             'rows': 5
         })
         
+        # NOWE pole image
+        self.fields['image'].widget.attrs.update({
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100',
+            'accept': 'image/jpeg,image/jpg,image/png,image/webp'
+        })
+        
         self.fields['weekly_price'].widget.attrs.update({
             'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors',
             'placeholder': 'Cena za tydzień (np. 149.99)',
@@ -326,10 +332,12 @@ class DietPlanForm(forms.ModelForm):
         # Polskie etykiety
         self.fields['name'].label = 'Nazwa planu'
         self.fields['description'].label = 'Opis planu'
+        self.fields['image'].label = 'Zdjęcie planu'
         self.fields['weekly_price'].label = 'Cena tygodniowa (zł)'
         self.fields['is_active'].label = 'Plan aktywny'
         
         # Help texts
+        self.fields['image'].help_text = 'Obsługiwane formaty: JPG, PNG, WebP. Maksymalny rozmiar: 5MB'
         self.fields['weekly_price'].help_text = 'System automatycznie obliczy ceny miesięczne i roczne'
         self.fields['is_active'].help_text = 'Nieaktywne plany nie są widoczne dla klientów'
     
@@ -338,6 +346,21 @@ class DietPlanForm(forms.ModelForm):
         if weekly_price and weekly_price <= 0:
             raise ValidationError('Cena musi być większa od 0.')
         return weekly_price
+    
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            # Sprawdź rozmiar pliku (5MB limit)
+            if image.size > 5 * 1024 * 1024:
+                raise ValidationError('Rozmiar pliku nie może przekraczać 5MB.')
+            
+            # Sprawdź rozszerzenie
+            allowed_extensions = ['jpg', 'jpeg', 'png', 'webp']
+            file_extension = image.name.split('.')[-1].lower()
+            if file_extension not in allowed_extensions:
+                raise ValidationError(f'Nieobsługiwany format pliku. Dozwolone: {", ".join(allowed_extensions)}')
+        
+        return image
     
 
 class ProfileUpdateForm(forms.ModelForm):

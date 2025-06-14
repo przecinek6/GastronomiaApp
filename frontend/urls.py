@@ -44,7 +44,9 @@ urlpatterns = [
     # Zarządzanie planami dietetycznymi  
     path('manage/diet-plans/', views.diet_plan_list, name='diet_plan_list'),
     path('manage/diet-plans/add/', views.diet_plan_add, name='diet_plan_add'),
+    path('manage/diet-plans/<int:pk>/', views.diet_plan_view, name='diet_plan_view'),  # NOWE
     path('manage/diet-plans/<int:pk>/edit/', views.diet_plan_edit, name='diet_plan_edit'),
+    path('manage/diet-plans/<int:pk>/toggle/', views.diet_plan_toggle, name='diet_plan_toggle'),  # NOWE
     path('manage/diet-plans/<int:pk>/delete/', views.diet_plan_delete, name='diet_plan_delete'),
 
     # Zarzadzanie zakupami

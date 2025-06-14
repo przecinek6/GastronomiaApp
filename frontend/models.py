@@ -187,6 +187,7 @@ class DishIngredient(models.Model):
 class DietPlan(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
+    image = models.ImageField(upload_to='diet_plans/', blank=True, null=True)
     weekly_price = models.DecimalField(
         max_digits=8, 
         decimal_places=2,

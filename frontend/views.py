@@ -518,48 +518,48 @@ def diet_plan_add(request):
         messages.error(request, 'Nie masz uprawnień do tej strony.')
         return redirect('home_page')
     
-    # Pobierz wszystkie dania aktywne
-    dishes = Dish.objects.filter(is_deleted=False).order_by('meal_type', 'name')
-    
-    # Przygotuj strukturę danych dla siatki
-    days = [
-        (1, 'Poniedziałek'), (2, 'Wtorek'), (3, 'Środa'), (4, 'Czwartek'),
-        (5, 'Piątek'), (6, 'Sobota'), (7, 'Niedziela')
-    ]
-    
-    meal_types = [
-        ('breakfast', 'Śniadanie'),
-        ('lunch', 'Obiad'),
-        ('dinner', 'Kolacja')
-    ]
-    
     if request.method == 'POST':
-        form = DietPlanForm(request.POST)
-        if form.is_valid():
+        form = DietPlanForm(request.POST, request.FILES)  # Dodano request.FILES
+        meal_forms = {}
+        
+        # Przygotuj formularze dla każdego dnia i posiłku
+        days = MealPlan.DAYS_OF_WEEK
+        meal_types = MealPlan.MEAL_TYPES
+        
+        is_valid = form.is_valid()
+        
+        # Walidacja formularzy posiłków
+        for day_num, day_name in days:
+            meal_forms[day_num] = {}
+            for meal_type, meal_name in meal_types:
+                field_name = f'meal_{day_num}_{meal_type}'
+                dish_id = request.POST.get(field_name)
+                
+                if dish_id:
+                    try:
+                        dish = Dish.objects.get(pk=dish_id, is_deleted=False)
+                        meal_forms[day_num][meal_type] = dish
+                    except Dish.DoesNotExist:
+                        is_valid = False
+                        messages.error(request, f'Wybrane danie dla {day_name} - {meal_name} nie istnieje.')
+        
+        if is_valid:
             try:
                 with transaction.atomic():
                     # Zapisz plan dietetyczny
                     diet_plan = form.save()
                     
-                    # Zapisz meal_plans
-                    meals_added = 0
-                    for day_num, day_name in days:
-                        for meal_type, meal_name in meal_types:
-                            dish_id = request.POST.get(f'meal_{day_num}_{meal_type}')
-                            if dish_id:
-                                try:
-                                    dish = Dish.objects.get(id=dish_id, is_deleted=False)
-                                    MealPlan.objects.create(
-                                        diet_plan=diet_plan,
-                                        day_of_week=day_num,
-                                        meal_type=meal_type,
-                                        dish=dish
-                                    )
-                                    meals_added += 1
-                                except Dish.DoesNotExist:
-                                    continue
+                    # Zapisz posiłki
+                    for day_num, meals in meal_forms.items():
+                        for meal_type, dish in meals.items():
+                            MealPlan.objects.create(
+                                diet_plan=diet_plan,
+                                day_of_week=day_num,
+                                meal_type=meal_type,
+                                dish=dish
+                            )
                     
-                    messages.success(request, f'Plan "{diet_plan.name}" został utworzony z {meals_added} posiłkami.')
+                    messages.success(request, f'Plan dietetyczny "{diet_plan.name}" został utworzony pomyślnie.')
                     return redirect('diet_plan_list')
                     
             except Exception as e:
@@ -567,88 +567,82 @@ def diet_plan_add(request):
     else:
         form = DietPlanForm()
     
-    # Przygotuj dane dla szablonu
-    grid_data = []
-    for day_num, day_name in days:
-        day_meals = {meal_type: None for meal_type, _ in meal_types}
-        grid_data.append({
-            'day_num': day_num,
-            'day_name': day_name,
-            'meals': day_meals
-        })
+    # Przygotuj dane do szablonu
+    days = MealPlan.DAYS_OF_WEEK
+    meal_types = MealPlan.MEAL_TYPES
+    
+    # Pobierz dostępne dania pogrupowane według typu
+    dishes_by_type = {
+        'breakfast': Dish.objects.filter(meal_type='breakfast', is_deleted=False).order_by('name'),
+        'lunch': Dish.objects.filter(meal_type='lunch', is_deleted=False).order_by('name'),
+        'dinner': Dish.objects.filter(meal_type='dinner', is_deleted=False).order_by('name'),
+        'any': Dish.objects.filter(meal_type='any', is_deleted=False).order_by('name'),
+    }
     
     context = {
         'form': form,
-        'grid_data': grid_data,
-        'meal_types': meal_types,
-        'dishes': dishes,
         'days': days,
-        'title': 'Dodaj plan dietetyczny',
-        'submit_text': 'Stwórz plan dietetyczny'
+        'meal_types': meal_types,
+        'dishes_by_type': dishes_by_type,
+        'title': 'Dodaj nowy plan dietetyczny',
     }
     
     return render(request, 'management/diet_plans/form.html', context)
 
 @login_required
 def diet_plan_edit(request, pk):
-    """Edycja planu dietetycznego - wszystko na jednej stronie"""
+    """Edycja istniejącego planu dietetycznego"""
     if not user_is_manager(request.user):
         messages.error(request, 'Nie masz uprawnień do tej strony.')
         return redirect('home_page')
     
     diet_plan = get_object_or_404(DietPlan, pk=pk)
     
-    # Pobierz wszystkie dania aktywne
-    dishes = Dish.objects.filter(is_deleted=False).order_by('meal_type', 'name')
-    
-    # Pobierz istniejące meal_plans dla tego planu
-    existing_meals = {}
-    for meal_plan in MealPlan.objects.filter(diet_plan=diet_plan):
-        key = f"{meal_plan.day_of_week}_{meal_plan.meal_type}"
-        existing_meals[key] = meal_plan
-    
-    # Przygotuj strukturę danych dla siatki
-    days = [
-        (1, 'Poniedziałek'), (2, 'Wtorek'), (3, 'Środa'), (4, 'Czwartek'),
-        (5, 'Piątek'), (6, 'Sobota'), (7, 'Niedziela')
-    ]
-    
-    meal_types = [
-        ('breakfast', 'Śniadanie'),
-        ('lunch', 'Obiad'),
-        ('dinner', 'Kolacja')
-    ]
-    
     if request.method == 'POST':
-        form = DietPlanForm(request.POST, instance=diet_plan)
-        if form.is_valid():
+        form = DietPlanForm(request.POST, request.FILES, instance=diet_plan)  # Dodano request.FILES
+        meal_forms = {}
+        
+        # Przygotuj formularze dla każdego dnia i posiłku
+        days = MealPlan.DAYS_OF_WEEK
+        meal_types = MealPlan.MEAL_TYPES
+        
+        is_valid = form.is_valid()
+        
+        # Walidacja formularzy posiłków
+        for day_num, day_name in days:
+            meal_forms[day_num] = {}
+            for meal_type, meal_name in meal_types:
+                field_name = f'meal_{day_num}_{meal_type}'
+                dish_id = request.POST.get(field_name)
+                
+                if dish_id:
+                    try:
+                        dish = Dish.objects.get(pk=dish_id, is_deleted=False)
+                        meal_forms[day_num][meal_type] = dish
+                    except Dish.DoesNotExist:
+                        is_valid = False
+                        messages.error(request, f'Wybrane danie dla {day_name} - {meal_name} nie istnieje.')
+        
+        if is_valid:
             try:
                 with transaction.atomic():
                     # Zapisz plan dietetyczny
                     diet_plan = form.save()
                     
-                    # Usuń wszystkie istniejące meal_plans dla tego planu
+                    # Usuń stare posiłki
                     MealPlan.objects.filter(diet_plan=diet_plan).delete()
                     
-                    # Zapisz nowe meal_plans
-                    meals_added = 0
-                    for day_num, day_name in days:
-                        for meal_type, meal_name in meal_types:
-                            dish_id = request.POST.get(f'meal_{day_num}_{meal_type}')
-                            if dish_id:
-                                try:
-                                    dish = Dish.objects.get(id=dish_id, is_deleted=False)
-                                    MealPlan.objects.create(
-                                        diet_plan=diet_plan,
-                                        day_of_week=day_num,
-                                        meal_type=meal_type,
-                                        dish=dish
-                                    )
-                                    meals_added += 1
-                                except Dish.DoesNotExist:
-                                    continue
+                    # Zapisz nowe posiłki
+                    for day_num, meals in meal_forms.items():
+                        for meal_type, dish in meals.items():
+                            MealPlan.objects.create(
+                                diet_plan=diet_plan,
+                                day_of_week=day_num,
+                                meal_type=meal_type,
+                                dish=dish
+                            )
                     
-                    messages.success(request, f'Plan "{diet_plan.name}" został zaktualizowany z {meals_added} posiłkami.')
+                    messages.success(request, f'Plan dietetyczny "{diet_plan.name}" został zaktualizowany.')
                     return redirect('diet_plan_list')
                     
             except Exception as e:
@@ -656,28 +650,33 @@ def diet_plan_edit(request, pk):
     else:
         form = DietPlanForm(instance=diet_plan)
     
-    # Przygotuj dane dla szablonu
-    grid_data = []
-    for day_num, day_name in days:
-        day_meals = {}
-        for meal_type, meal_name in meal_types:
-            key = f"{day_num}_{meal_type}"
-            day_meals[meal_type] = existing_meals.get(key)
-        grid_data.append({
-            'day_num': day_num,
-            'day_name': day_name,
-            'meals': day_meals
-        })
+    # Przygotuj dane do szablonu
+    days = MealPlan.DAYS_OF_WEEK
+    meal_types = MealPlan.MEAL_TYPES
+    
+    # Pobierz dostępne dania pogrupowane według typu
+    dishes_by_type = {
+        'breakfast': Dish.objects.filter(meal_type='breakfast', is_deleted=False).order_by('name'),
+        'lunch': Dish.objects.filter(meal_type='lunch', is_deleted=False).order_by('name'),
+        'dinner': Dish.objects.filter(meal_type='dinner', is_deleted=False).order_by('name'),
+        'any': Dish.objects.filter(meal_type='any', is_deleted=False).order_by('name'),
+    }
+    
+    # Pobierz obecne posiłki
+    current_meals = {}
+    for meal_plan in diet_plan.mealplan_set.all():
+        if meal_plan.day_of_week not in current_meals:
+            current_meals[meal_plan.day_of_week] = {}
+        current_meals[meal_plan.day_of_week][meal_plan.meal_type] = meal_plan.dish_id
     
     context = {
         'form': form,
         'diet_plan': diet_plan,
-        'grid_data': grid_data,
-        'meal_types': meal_types,
-        'dishes': dishes,
         'days': days,
+        'meal_types': meal_types,
+        'dishes_by_type': dishes_by_type,
+        'current_meals': current_meals,
         'title': f'Edytuj plan: {diet_plan.name}',
-        'submit_text': 'Zaktualizuj plan dietetyczny'
     }
     
     return render(request, 'management/diet_plans/form.html', context)
@@ -708,6 +707,54 @@ def diet_plan_delete(request, pk):
     return render(request, 'management/diet_plans/confirm_delete.html', {
         'diet_plan': diet_plan
     })
+
+@login_required
+def diet_plan_view(request, pk):
+    """Podgląd planu dietetycznego dla menadżera"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    diet_plan = get_object_or_404(DietPlan, pk=pk)
+    
+    # Pobierz posiłki dla planu
+    meals = MealPlan.objects.filter(diet_plan=diet_plan).select_related('dish')
+    
+    # Przygotuj dane dla szablonu
+    days = MealPlan.DAYS_OF_WEEK
+    meal_types = MealPlan.MEAL_TYPES
+    
+    # Policz łączną liczbę posiłków
+    total_meals = meals.count()
+    
+    context = {
+        'diet_plan': diet_plan,
+        'meals': meals,
+        'days': days,
+        'meal_types': meal_types,
+        'total_meals': total_meals,
+    }
+    
+    return render(request, 'management/diet_plans/view.html', context)
+
+
+@login_required
+def diet_plan_toggle(request, pk):
+    """Przełączanie statusu aktywności planu"""
+    if not user_is_manager(request.user):
+        messages.error(request, 'Nie masz uprawnień do tej strony.')
+        return redirect('home_page')
+    
+    diet_plan = get_object_or_404(DietPlan, pk=pk)
+    
+    if request.method == 'POST':
+        diet_plan.is_active = not diet_plan.is_active
+        diet_plan.save()
+        
+        status = "aktywowany" if diet_plan.is_active else "dezaktywowany"
+        messages.success(request, f'Plan "{diet_plan.name}" został {status}.')
+    
+    return redirect('diet_plan_list')
 
 
 def user_is_client(user):
