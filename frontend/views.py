@@ -1,7 +1,9 @@
 # Standardowe biblioteki Python
 import os
 import traceback
+import uuid
 from datetime import date, timedelta, datetime
+from decimal import Decimal
 
 # Django - podstawowe
 from django.conf import settings
@@ -14,6 +16,7 @@ from django.db.models import Q, Sum
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_GET
+from django.utils import timezone
 
 # ReportLab - generowanie PDF
 from reportlab.lib import colors
@@ -1444,10 +1447,25 @@ def subscription_create(request, plan_id):
                         delivery_notes=form.cleaned_data['delivery_notes']
                     )
                     
-                    # TODO: Integracja z Stripe dla płatności
-                    # Na razie symuluj płatność
-                    subscription.status = 'active'
+                    # Generuj symulowane ID płatności
+                    subscription.stripe_subscription_id = f'SIM_SUB_{subscription.id}'
+                    subscription.stripe_customer_id = f'SIM_CUS_{request.user.id}'
                     subscription.save()
+
+                    # Twórz symulowaną płatność
+                    payment = Payment.objects.create(
+                        subscription=subscription,
+                        stripe_payment_intent_id=f'SIM_PAY_{uuid.uuid4()}',
+                        amount=total_amount,
+                        status='completed',
+                        payment_date=timezone.now()
+                    )
+
+                    # Symuluj powiadomienie o płatności
+                    messages.success(request, 
+                        f'Płatność została pomyślnie przetworzona! '
+                        f'ID transakcji: {payment.stripe_payment_intent_id}'
+                    )
                     
                     # Dodaj punkty lojalnościowe (1 punkt = 1 zł)
                     try:
@@ -1567,12 +1585,48 @@ def subscription_cancel(request, subscription_id):
     )
     
     if request.method == 'POST':
-        # TODO: Oblicz zwrot proporcjonalny
+        refund_type = request.POST.get('refund_type', 'points')
+        
+        # Oblicz zwrot
+        days_used = (date.today() - subscription.start_date).days
+        total_days = (subscription.end_date - subscription.start_date).days
+        days_remaining = max(0, total_days - days_used)
+        refund_amount = (subscription.total_amount / total_days) * days_remaining
+        
         subscription.status = 'cancelled'
         subscription.save()
         
-        messages.success(request, 'Subskrypcja została anulowana.')
-        return redirect('subscription_list')
+        if refund_amount > 0:
+            # Twórz rekord zwrotu
+            refund_payment = Payment.objects.create(
+                subscription=subscription,
+                stripe_payment_intent_id=f'SIM_REFUND_{uuid.uuid4()}',
+                amount=-refund_amount,  # Ujemna kwota dla zwrotu
+                status='refunded',
+                payment_date=timezone.now(),
+                refund_type=refund_type
+            )
+            
+            if refund_type == 'points':
+                # Zwrot w punktach lojalnościowych (1 zł = 1 punkt)
+                loyalty_account = request.user.loyaltyaccount
+                loyalty_account.add_points(
+                    points=int(refund_amount),
+                    transaction_type='adjustment',
+                    description=f'Zwrot za anulowaną subskrypcję: {subscription.diet_plan.name}',
+                    related_order=subscription
+                )
+                messages.success(request, 
+                    f'Subskrypcja została anulowana. '
+                    f'Zwrot {int(refund_amount)} punktów został dodany do Twojego konta!'
+                )
+            else:
+                messages.success(request, 
+                    f'Subskrypcja została anulowana. '
+                    f'Zwrot {refund_amount:.2f} zł zostanie przelany w ciągu 3-5 dni roboczych.'
+                )
+        else:
+            messages.success(request, 'Subskrypcja została anulowana.')
     
     # Oblicz potencjalny zwrot
     days_used = (date.today() - subscription.start_date).days
@@ -1657,12 +1711,31 @@ def diet_change(request, subscription_id):
                     
                     # Jeśli dopłata, przekieruj do płatności
                     if price_adjustment > 0:
-                        messages.info(request, f'Do dopłaty: {price_adjustment:.2f} zł')
-                        # TODO: Przekieruj do płatności
+                        # Dopłata - symuluj płatność
+                        payment = Payment.objects.create(
+                            subscription=subscription,
+                            stripe_payment_intent_id=f'SIM_ADJUSTMENT_{uuid.uuid4()}',
+                            amount=price_adjustment,
+                            status='completed',
+                            payment_date=timezone.now()
+                        )
+                        messages.success(request, 
+                            f'Dieta została zmieniona. Dopłata {price_adjustment:.2f} zł została pobrana.'
+                        )
                     elif price_adjustment < 0:
-                        messages.info(request, f'Zwrot: {abs(price_adjustment):.2f} zł zostanie przelany na Twoje konto.')
-                    
-                    return redirect('subscription_detail', subscription_id=subscription.id)
+                        # Zwrot różnicy w punktach
+                        refund_amount = abs(price_adjustment)
+                        loyalty_account = request.user.loyaltyaccount
+                        loyalty_account.add_points(
+                            points=int(refund_amount),
+                            transaction_type='adjustment',
+                            description=f'Zwrot różnicy za zmianę diety',
+                            related_order=subscription
+                        )
+                        messages.success(request, 
+                            f'Dieta została zmieniona. '
+                            f'Zwrot {int(refund_amount)} punktów został dodany do Twojego konta!'
+                        )
                     
             except Exception as e:
                 messages.error(request, f'Wystąpił błąd podczas zmiany diety: {str(e)}')
@@ -1724,13 +1797,11 @@ def client_payments(request):
 def _calculate_daily_rate(plan, duration):
     """Calculate daily rate for a diet plan and duration ('week', 'month', 'year')."""
     if duration == 'week':
-        return float(plan.weekly_price) / 7
+        return plan.weekly_price / Decimal('7')
     elif duration == 'month':
-        return float(plan.monthly_price) / 30
-    elif duration == 'year':
-        return float(plan.yearly_price) / 365
-    else:
-        return 0
+        return plan.monthly_price / Decimal('30')
+    else:  # year
+        return plan.yearly_price / Decimal('365')
 
 @login_required
 def shopping_list_overview(request):

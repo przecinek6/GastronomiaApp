@@ -21,7 +21,6 @@ System umożliwia tworzenie planów posiłków, zarządzanie subskrypcjami klien
 - Vue.js 3
 - TailwindCSS
 - PostgreSQL
-- Stripe API
 
 ## Autorzy
 Marcin Malinowski

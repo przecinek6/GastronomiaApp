@@ -237,8 +237,8 @@
                         </div>
                         {% if subscription.stripe_subscription_id %}
                             <div class="flex justify-between">
-                                <span class="text-blue-700">ID Stripe:</span>
-                                <span class="font-medium text-blue-800 text-xs">{{ subscription.stripe_subscription_id|truncatechars:15 }}</span>
+                                <span class="text-blue-700">ID transakcji:</span>
+                                <span class="font-medium text-blue-800 text-xs">{{ subscription.stripe_subscription_id|truncatechars:20 }}</span>
                             </div>
                         {% endif %}
                     </div>

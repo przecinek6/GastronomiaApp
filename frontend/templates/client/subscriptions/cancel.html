@@ -160,6 +160,29 @@
             </ul>
         </div>
 
+        <!-- Refund Type Selection -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Wybierz formę zwrotu</h3>
+            <div class="space-y-3">
+                <label class="flex items-center cursor-pointer p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <input type="radio" name="refund_type" value="points" checked 
+                        class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500">
+                    <div class="ml-3">
+                        <span class="font-medium text-gray-800">Punkty lojalnościowe</span>
+                        <p class="text-sm text-gray-600">Otrzymasz {{ refund_amount|floatformat:0 }} punktów (1 punkt = 1 zł)</p>
+                    </div>
+                </label>
+                <label class="flex items-center cursor-pointer p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <input type="radio" name="refund_type" value="money" 
+                        class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500">
+                    <div class="ml-3">
+                        <span class="font-medium text-gray-800">Zwrot pieniędzy (symulacja)</span>
+                        <p class="text-sm text-gray-600">Przelew {{ refund_amount }} zł w ciągu 3-5 dni</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="{% url 'subscription_detail' subscription.id %}" 
