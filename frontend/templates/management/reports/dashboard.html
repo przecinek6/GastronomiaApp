@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Raporty - Panel zarządzania{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Raporty i analizy</h1>
+                    <p class="text-gray-600">Kompleksowa analiza działalności Twojego cateringu</p>
+                </div>
+                <a href="{% url 'manage_dashboard' %}" 
+                   class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                    Powrót
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Przychód dzienny -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Przychód dzisiaj</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ revenue_stats.today|floatformat:2 }} zł</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ current_date|date:"d.m.Y" }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center">
+                        <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Przychód miesięczny -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Przychód w tym miesiącu</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ revenue_stats.this_month|floatformat:2 }} zł</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ current_date|date:"F Y" }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
+                        <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aktywne subskrypcje -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Aktywne subskrypcje</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ subscription_stats.active }}</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <span class="text-green-600">+{{ subscription_stats.new_this_month }}</span> nowych
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
+                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Categories -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Raport przychodów -->
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                            <i data-lucide="dollar-sign" class="w-5 h-5 text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Analiza przychodów</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Szczegółowa analiza przychodów w różnych okresach, według planów dietetycznych i trendów.</p>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'revenue_report' %}" 
+                           class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                            <i data-lucide="bar-chart" class="w-4 h-4 inline mr-2"></i>
+                            Zobacz raport
+                        </a>
+                        <a href="{% url 'generate_report_pdf' 'revenue' %}" 
+                           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Pobierz PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analiza subskrypcji -->
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                            <i data-lucide="repeat" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Analiza subskrypcji</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Współczynnik retencji, średni czas trwania, analiza rezygnacji i zmian diet.</p>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'subscription_analytics' %}" 
+                           class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            <i data-lucide="pie-chart" class="w-4 h-4 inline mr-2"></i>
+                            Zobacz raport
+                        </a>
+                        <a href="{% url 'generate_report_pdf' 'subscriptions' %}" 
+                           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Pobierz PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analiza klientów -->
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                            <i data-lucide="user-check" class="w-5 h-5 text-purple-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Analiza klientów</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Top klienci, analiza lokalizacji, program poleceń i zachowania zakupowe.</p>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'customer_insights' %}" 
+                           class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
+                            <i data-lucide="users" class="w-4 h-4 inline mr-2"></i>
+                            Zobacz raport
+                        </a>
+                        <a href="{% url 'generate_report_pdf' 'customers' %}" 
+                           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Pobierz PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analiza składników -->
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200">
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                            <i data-lucide="package" class="w-5 h-5 text-orange-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Analiza składników i dań</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Popularność dań, wykorzystanie składników, analiza kosztów i wartości odżywczych.</p>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'inventory_analysis' %}" 
+                           class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                            <i data-lucide="database" class="w-4 h-4 inline mr-2"></i>
+                            Zobacz raport
+                        </a>
+                        <a href="{% url 'generate_report_pdf' 'inventory' %}" 
+                           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                            Pobierz PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Plans -->
+        {% if popular_plans %}
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Najpopularniejsze plany dietetyczne</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Plan</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Liczba subskrypcji</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Cena tygodniowa</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plan in popular_plans %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <div class="font-medium text-gray-800">{{ plan.name }}</div>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    {{ plan.subscription_count }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-center text-gray-700">
+                                {{ plan.weekly_price|floatformat:2 }} zł
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                {% if plan.is_active %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Aktywny
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Nieaktywny
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}

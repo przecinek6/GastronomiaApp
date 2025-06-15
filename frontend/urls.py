@@ -1,5 +1,5 @@
 from django.urls import path
-from frontend import views
+from frontend import views, reports_views
 
 urlpatterns = [
     # Podstawowe strony
@@ -53,6 +53,20 @@ urlpatterns = [
     path('manage/shopping/', views.shopping_list_overview, name='shopping_list_overview'),
     path('manage/shopping/preview/<int:year>/<int:month>/<int:day>/', views.shopping_list_preview, name='shopping_list_preview'),
     path('manage/shopping/pdf/<int:year>/<int:month>/<int:day>/', views.shopping_list_pdf, name='shopping_list_pdf'),
+
+    # Moduł raportów
+    path('manage/reports/', reports_views.reports_dashboard, name='reports_dashboard'),
+    path('manage/reports/revenue/', reports_views.revenue_report, name='revenue_report'),
+    path('manage/reports/subscriptions/', reports_views.subscription_analytics, name='subscription_analytics'),
+    path('manage/reports/customers/', reports_views.customer_insights, name='customer_insights'),
+    path('manage/reports/inventory/', reports_views.inventory_analysis, name='inventory_analysis'),
+    path('manage/reports/pdf/<str:report_type>/', reports_views.generate_report_pdf, name='generate_report_pdf'),
+
+    # API endpointy dla wykresów raportów
+    path('api/reports/revenue-chart/', reports_views.revenue_chart_data, name='revenue_chart_data'),
+    path('api/reports/subscription-status/', reports_views.subscription_status_data, name='subscription_status_data'),
+    path('api/reports/popular-plans/', reports_views.popular_plans_data, name='popular_plans_data'),
+    path('api/reports/customer-growth/', reports_views.customer_growth_data, name='customer_growth_data'),
 
     # API endpointy
     path('api/ingredient/<int:ingredient_id>/', views.ingredient_data_api, name='ingredient_data_api'),

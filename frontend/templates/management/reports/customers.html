@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Analiza klientów{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Analiza klientów</h1>
+                    <p class="text-gray-600">Zachowania zakupowe, lokalizacje i program poleceń</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'generate_report_pdf' 'customers' %}" 
+                       class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
+                        <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                        Pobierz PDF
+                    </a>
+                    <a href="{% url 'reports_dashboard' %}" 
+                       class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                        Powrót
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Program Stats -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Program poleceń</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Wszystkie polecenia</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ referral_stats.total_referrals }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Zrealizowane</p>
+                    <p class="text-2xl font-bold text-green-600">{{ referral_stats.completed_referrals }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Oczekujące</p>
+                    <p class="text-2xl font-bold text-yellow-600">{{ referral_stats.pending_referrals }}</p>
+                </div>
+            </div>
+            
+            {% if referral_stats.top_referrers %}
+            <div class="mt-6">
+                <h4 class="text-lg font-medium text-gray-800 mb-3">Top polecający</h4>
+                <div class="space-y-2">
+                    {% for referrer in referral_stats.top_referrers %}
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="font-medium text-gray-800">
+                            {{ referrer.user.first_name }} {{ referrer.user.last_name|default:referrer.user.username }}
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                            {{ referrer.referral_count }} poleceń
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Top Customers -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Top 20 klientów według wartości</h3>
+            {% if top_customers %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Klient</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Wartość zamówień</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Liczba subskrypcji</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Aktywne</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Miasto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in top_customers %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <div class="font-medium text-gray-800">
+                                    {{ customer.user.first_name }} {{ customer.user.last_name }}
+                                </div>
+                                <div class="text-sm text-gray-500">{{ customer.user.email }}</div>
+                            </td>
+                            <td class="py-3 px-4 text-right font-semibold text-gray-800">
+                                {{ customer.total_spent|floatformat:2 }} zł
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    {{ customer.subscription_count }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                {% if customer.active_subscriptions > 0 %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                        {{ customer.active_subscriptions }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-700">
+                                {{ customer.delivery_city|default:"-" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">Brak danych o klientach</p>
+            {% endif %}
+        </div>
+
+        <!-- Customer Locations -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Lokalizacje klientów</h3>
+            {% if customer_locations %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for location in customer_locations %}
+                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium text-gray-800">{{ location.delivery_city }}</span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800">
+                        {{ location.count }} {% if location.count == 1 %}klient{% else %}klientów{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">Brak danych o lokalizacjach</p>
+            {% endif %}
+        </div>
+
+        <!-- Average Order by Duration -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Średnia wartość zamówienia według długości subskrypcji</h3>
+            {% if avg_order_by_duration %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Długość subskrypcji</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Średnia wartość</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Całkowita wartość</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Liczba zamówień</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in avg_order_by_duration %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium text-gray-800">
+                                {% if order.subscription__duration == 'week' %}
+                                    1 tydzień
+                                {% elif order.subscription__duration == 'month' %}
+                                    1 miesiąc
+                                {% elif order.subscription__duration == 'year' %}
+                                    1 rok
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-800">
+                                {{ order.avg_amount|floatformat:2 }} zł
+                            </td>
+                            <td class="py-3 px-4 text-right font-semibold text-gray-800">
+                                {{ order.total_amount|floatformat:2 }} zł
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    {{ order.count }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">Brak danych o zamówieniach</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}

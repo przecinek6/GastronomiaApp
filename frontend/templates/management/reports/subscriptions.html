@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Analiza subskrypcji{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Analiza subskrypcji</h1>
+                    <p class="text-gray-600">Retencja klientów, czas trwania i analiza rezygnacji</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'generate_report_pdf' 'subscriptions' %}" 
+                       class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                        Pobierz PDF
+                    </a>
+                    <a href="{% url 'reports_dashboard' %}" 
+                       class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                        Powrót
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Całkowita liczba</p>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_subscriptions }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Wszystkie subskrypcje</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Aktywne</p>
+                        <p class="text-3xl font-bold text-green-600">{{ active_subscriptions }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Obecnie aktywne</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Retencja</p>
+                        <p class="text-3xl font-bold text-purple-600">{{ retention_rate|floatformat:1 }}%</p>
+                        <p class="text-xs text-gray-500 mt-1">Współczynnik retencji</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i data-lucide="target" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Śr. czas trwania</p>
+                        <p class="text-3xl font-bold text-orange-600">{{ avg_duration|floatformat:0 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Dni</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i data-lucide="clock" class="w-6 h-6 text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Status Distribution -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Dystrybucja statusów</h3>
+                <div class="h-64">
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="mt-4 space-y-2">
+                    {% for status in status_distribution %}
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">{{ status.get_status_display }}</span>
+                        <span class="font-medium">{{ status.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Duration Distribution -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Długość subskrypcji</h3>
+                <div class="h-64">
+                    <canvas id="durationChart"></canvas>
+                </div>
+                <div class="mt-4 space-y-2">
+                    {% for duration in duration_distribution %}
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">{{ duration.get_duration_display }}</span>
+                        <span class="font-medium">{{ duration.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Diet Changes Analysis -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Analiza zmian diet</h3>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">
+                    Średnia liczba zmian na subskrypcję: 
+                    <span class="font-semibold text-gray-800">{{ avg_changes_per_sub|floatformat:2 }}</span>
+                </p>
+            </div>
+            {% if diet_change_patterns %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Z planu</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Na plan</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Liczba zmian</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pattern in diet_change_patterns %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <span class="font-medium text-gray-800">{{ pattern.old_plan__name }}</span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="font-medium text-gray-800">{{ pattern.new_plan__name }}</span>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    {{ pattern.count }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Brak danych o zmianach diet</p>
+            {% endif %}
+        </div>
+
+        <!-- Cancellation Analysis -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Analiza rezygnacji</h3>
+            <p class="text-sm text-gray-600 mb-4">Czas aktywności przed anulowaniem subskrypcji</p>
+            
+            {% if cancellation_timing %}
+            <div class="space-y-3">
+                {% for period, count in cancellation_timing.items %}
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700">{{ period }}</span>
+                        <span class="text-sm text-gray-600">{{ count }} rezygnacji</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-red-500 h-2 rounded-full" 
+                             style="width: {% widthratio count cancellation_timing.values|dictsort:"-1"|first 100 %}%">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Brak danych o rezygnacjach w ostatnim miesiącu</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Status Chart
+    fetch("{% url 'subscription_status_data' %}")
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: data.colors || [
+                            'rgb(250, 204, 21)',
+                            'rgb(52, 211, 153)',
+                            'rgb(96, 165, 250)',
+                            'rgb(248, 113, 113)',
+                            'rgb(167, 139, 250)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return label + ': ' + value + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    
+    // Duration Chart
+    const durationData = {
+        labels: [
+            {% for duration in duration_distribution %}'{{ duration.get_duration_display }}'{% if not forloop.last %},{% endif %}{% endfor %}
+        ],
+        values: [
+            {% for duration in duration_distribution %}{{ duration.count }}{% if not forloop.last %},{% endif %}{% endfor %}
+        ]
+    };
+    
+    const ctx2 = document.getElementById('durationChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: durationData.labels,
+            datasets: [{
+                label: 'Liczba subskrypcji',
+                data: durationData.values,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: 'rgb(59, 130, 246)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock content %}

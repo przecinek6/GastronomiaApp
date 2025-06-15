@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Analiza składników i dań{% endblock title %}
+
+{% block content %}
+<section class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Analiza składników i dań</h1>
+                    <p class="text-gray-600">Popularność dań, wykorzystanie składników i analiza kosztów</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'generate_report_pdf' 'inventory' %}" 
+                       class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                        <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>
+                        Pobierz PDF
+                    </a>
+                    <a href="{% url 'reports_dashboard' %}" 
+                       class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                        Powrót
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Dishes -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Top 20 najpopularniejszych dań</h3>
+            {% if dish_popularity %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Danie</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Typ posiłku</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Liczba użyć</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Koszt produkcji</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dish in dish_popularity %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <div class="font-medium text-gray-800">{{ dish.name }}</div>
+                                {% if dish.allergens %}
+                                <div class="text-xs text-gray-500 mt-1">
+                                    <i data-lucide="alert-circle" class="w-3 h-3 inline mr-1"></i>
+                                    {{ dish.allergens }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                    {% if dish.meal_type == 'breakfast' %}bg-yellow-100 text-yellow-800
+                                    {% elif dish.meal_type == 'lunch' %}bg-blue-100 text-blue-800
+                                    {% elif dish.meal_type == 'dinner' %}bg-purple-100 text-purple-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ dish.get_meal_type_display }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    {{ dish.usage_count }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-700">
+                                {{ dish.get_total_cost|floatformat:2 }} zł
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">Brak danych o popularności dań</p>
+            {% endif %}
+        </div>
+
+        <!-- Most Used Ingredients -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Top 20 najczęściej używanych składników</h3>
+            {% if ingredient_usage %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Składnik</th>
+                            <th class="text-center py-3 px-4 font-medium text-gray-700">Liczba użyć</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Całkowita ilość</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Cena za 100g</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ingredient in ingredient_usage %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium text-gray-800">
+                                {{ ingredient.name }}
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    {{ ingredient.usage_count }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-700">
+                                {{ ingredient.total_quantity|floatformat:0 }}g
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-700">
+                                {{ ingredient.price_per_100g|floatformat:2 }} zł
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">Brak danych o wykorzystaniu składników</p>
+            {% endif %}
+        </div>
+
+        <!-- Most Expensive Ingredients -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Top 10 najdroższych składników</h3>
+            {% if expensive_ingredients %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Składnik</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Cena za 100g</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Kalorie</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Białko</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-700">Tłuszcze</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ingredient in expensive_ingredients %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium text-gray-800">
+                                {{ ingredient.name }}
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="font-semibold text-red-600">
+                                    {{ ingredient.price_per_100g|floatformat:2 }} zł
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-700">
+                                {{ ingredient.calories_per_100g|floatformat:0 }} kcal
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-700">
+                                {{ ingredient.protein_per_100g|floatformat:1 }}g
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-700">
+                                {{ ingredient.fat_per_100g|floatformat:1 }}g
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">Brak danych o składnikach</p>
+            {% endif %}
+        </div>
+
+        <!-- Nutritional Analysis -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- High Protein Dishes -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Top 10 dań wysokobiałkowych</h3>
+                {% if nutritional_analysis.high_protein %}
+                <div class="space-y-3">
+                    {% for dish in nutritional_analysis.high_protein %}
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="font-medium text-gray-800">{{ dish.name }}</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            {{ dish.calculated_protein|floatformat:1 }}g białka
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">Brak danych</p>
+                {% endif %}
+            </div>
+
+            <!-- Low Calorie Dishes -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Top 10 dań niskokalorycznych</h3>
+                {% if nutritional_analysis.low_calorie %}
+                <div class="space-y-3">
+                    {% for dish in nutritional_analysis.low_calorie %}
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span class="font-medium text-gray-800">{{ dish.name }}</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                            {{ dish.calculated_calories|floatformat:0 }} kcal
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">Brak danych</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    lucide.createIcons();
+});
+</script>
+{% endblock content %}
