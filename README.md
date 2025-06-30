@@ -13,7 +13,6 @@ System umożliwia tworzenie planów posiłków, zarządzanie subskrypcjami klien
 - Automatyczne generowanie list zakupów
 - Analiza przychodów i retencji klientów
 - System lojalnościowy z punktami
-- Płatności online przez Stripe (tryb testowy)
 - Eksport raportów do PDF
 
 ## Technologie
@@ -22,5 +21,5 @@ System umożliwia tworzenie planów posiłków, zarządzanie subskrypcjami klien
 - TailwindCSS
 - PostgreSQL
 
-## Autorzy
+## Autor
 Marcin Malinowski
