@@ -52,7 +52,63 @@ from .shopping_utils import (
 User = get_user_model()
 
 def home_page(request):
-    return render(request, 'home.html')
+    """Strona główna z danymi z bazy danych"""
+    # Pobierz aktywne plany dietetyczne (maksymalnie 3 dla sekcji)
+    featured_plans = DietPlan.objects.filter(is_active=True).order_by('weekly_price')[:3]
+    
+    # Pobierz najnowsze dania z różnych kategorii
+    featured_dishes = []
+    meal_types = ['breakfast', 'lunch', 'dinner']
+    
+    for meal_type in meal_types:
+        dish = Dish.objects.filter(
+            meal_type=meal_type, 
+            is_deleted=False
+        ).order_by('-created_at').first()
+        
+        if dish:
+            featured_dishes.append(dish)
+    
+    # Podstawowe statystyki
+    stats = {
+        'total_clients': UserProfile.objects.filter(role='client', is_active=True).count(),
+        'total_plans': DietPlan.objects.filter(is_active=True).count(),
+        'total_dishes': Dish.objects.filter(is_deleted=False).count(),
+        'active_subscriptions': Subscription.objects.filter(
+            status__in=['active', 'trial']
+        ).count() if 'Subscription' in globals() else 0
+    }
+    
+    # Testimonials (w przyszłości można dodać model dla opinii)
+    testimonials = [
+        {
+            'name': 'Anna K.',
+            'text': 'Rewelacyjne posiłki! Wreszcie mogę jeść zdrowo bez gotowania.',
+            'rating': 5,
+            'plan': 'Plan Fitness'
+        },
+        {
+            'name': 'Marcin W.',
+            'text': 'Świetna jakość i punktualna dostawa. Polecam każdemu!',
+            'rating': 5,
+            'plan': 'Plan Klasyczny'
+        },
+        {
+            'name': 'Karolina M.',
+            'text': 'Dzięki waszemu cateringowi schudłam 8kg w 2 miesiące!',
+            'rating': 5,
+            'plan': 'Plan Redukcyjny'
+        }
+    ]
+    
+    context = {
+        'featured_plans': featured_plans,
+        'featured_dishes': featured_dishes,
+        'stats': stats,
+        'testimonials': testimonials,
+    }
+    
+    return render(request, 'home.html', context)
 
 def register_view(request):
     if request.user.is_authenticated:

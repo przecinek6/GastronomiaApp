@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <title>GastronomiaApp - {% block title %}{% endblock title %}</title>
+    <title>{% block title %}GastronomiaApp - Zdrowy catering na wynos{% endblock title %}</title>
     <style>
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -23,17 +23,19 @@
         }
         
         .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            -webkit-backdrop-filter: blur(20px);
         }
         
         .hover-scale {
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         .hover-scale:hover {
             transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
         
         .fade-in {
@@ -49,6 +51,26 @@
             }
         }
         
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
         .stagger-1 { animation-delay: 0.1s; }
         .stagger-2 { animation-delay: 0.2s; }
         .stagger-3 { animation-delay: 0.3s; }
@@ -60,89 +82,204 @@
             opacity: 0.3;
         }
         
-        .food-pattern {
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f3f4f6' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #10b981, #059669);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #059669, #047857);
+        }
+        
+        /* Navigation improvements */
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(to right, #10b981, #059669);
+            border-radius: 1px;
+        }
+        
+        /* Enhanced dropdown */
+        .dropdown-menu {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        
+        /* Loading animation */
+        .loading-dots {
+            display: inline-block;
+        }
+        
+        .loading-dots::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        /* Smooth page transitions */
+        .page-transition {
+            opacity: 0;
+            animation: pageIn 0.5s ease forwards;
+        }
+        
+        @keyframes pageIn {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Focus styles for accessibility */
+        .focus-visible:focus {
+            outline: 2px solid #10b981;
+            outline-offset: 2px;
+        }
+        
+        /* Enhanced button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        /* Mobile navigation improvements */
+        @media (max-width: 768px) {
+            .mobile-menu {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .mobile-menu.open {
+                transform: translateX(0);
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800" id="app">
+<body class="bg-gray-50 text-gray-800 page-transition" id="app">
     <!-- Navigation -->
     <nav class="fixed w-full top-0 z-50 glass-effect shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <a href="/" class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                    <a href="{% url 'home_page' %}" class="flex items-center space-x-2 group">
+                        <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
                             <span class="text-white font-bold text-lg">G</span>
                         </div>
-                        <span class="text-xl font-bold text-gray-800">GastronomiaApp</span>
+                        <span class="text-xl font-bold text-gray-800 group-hover:text-green-600 transition-colors duration-200">GastronomiaApp</span>
                     </a>
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="{% url 'home_page' %}#home" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Strona główna</a>
-                    <a href="{% url 'browse_diet_plans' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Plany</a>
-                    <a href="{% url 'home_page' %}#how-it-works" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Jak to działa</a>
-                    <a href="{% url 'home_page' %}#contact" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Kontakt</a>
+                    <a href="{% url 'home_page' %}#home" class="nav-link text-gray-700 hover:text-green-600 transition-colors duration-200">Strona główna</a>
+                    <a href="{% url 'browse_diet_plans' %}" class="nav-link text-gray-700 hover:text-green-600 transition-colors duration-200">Plany</a>
+                    <a href="{% url 'home_page' %}#plans" class="nav-link text-gray-700 hover:text-green-600 transition-colors duration-200">Jak to działa</a>
+                    <a href="#contact" class="nav-link text-gray-700 hover:text-green-600 transition-colors duration-200">Kontakt</a>
                 </div>
 
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
                         <!-- User Menu Dropdown -->
-                        <div class="relative">
-                            <button @click="userMenuOpen = !userMenuOpen" 
-                                    class="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors duration-200 focus:outline-none">
-                                <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                        <div class="relative" data-user-menu>
+                            <button @click="toggleUserMenu" 
+                                    class="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-full">
+                                <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center ring-2 ring-white shadow-lg">
                                     <span class="text-white font-bold text-sm">{{ user.first_name.0|default:user.username.0|upper }}</span>
                                 </div>
-                                <span class="hidden md:block">{{ user.first_name|default:user.username }}</span>
-                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': userMenuOpen}"></i>
+                                <span class="hidden sm:block font-medium">{{ user.first_name|default:user.username }}</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 transform transition-transform duration-200" :class="{'rotate-180': userMenuOpen}"></i>
                             </button>
                             
-                            <!-- Dropdown Menu -->
-                            <div v-show="userMenuOpen" 
-                                @click.away="userMenuOpen = false"
-                                class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-fade-in">
+                            <div v-show="userMenuOpen" class="dropdown-menu absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl py-2 border border-gray-100"
+                                 :class="{'show': userMenuOpen}">
+                                <!-- User Info -->
                                 <div class="px-4 py-3 border-b border-gray-100">
                                     <p class="text-sm font-medium text-gray-800">{{ user.first_name }} {{ user.last_name }}</p>
-                                    <p class="text-xs text-gray-600">{{ user.email }}</p>
+                                    <p class="text-sm text-gray-500">{{ user.email }}</p>
                                 </div>
                                 
-                                {% if user.userprofile.role == 'manager' %}
-                                    <a href="{% url 'manage_dashboard' %}" 
-                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                        <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
-                                        Panel menadżera
-                                    </a>
-                                {% else %}
+                                <!-- Menu Items -->
+                                {% if user.userprofile.role == 'client' %}
                                     <a href="{% url 'client_dashboard' %}" 
-                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                        <i data-lucide="home" class="w-4 h-4 mr-3"></i>
-                                        Dashboard
+                                       @click="closeMenus"
+                                       class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                        <i data-lucide="layout-dashboard" class="w-4 h-4 mr-3"></i>
+                                        Panel klienta
                                     </a>
                                     <a href="{% url 'client_profile' %}" 
-                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                       @click="closeMenus"
+                                       class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
                                         <i data-lucide="user" class="w-4 h-4 mr-3"></i>
                                         Profil
                                     </a>
-                                    <a href="{% url 'browse_diet_plans' %}" 
-                                    class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-                                        <i data-lucide="calendar" class="w-4 h-4 mr-3"></i>
-                                        Plany dietetyczne
+                                {% elif user.userprofile.role == 'manager' %}
+                                    <a href="{% url 'manage_dashboard' %}" 
+                                       @click="closeMenus"
+                                       class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                        <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                                        Panel zarządzania
                                     </a>
                                 {% endif %}
                                 
+                                <a href="{% url 'browse_diet_plans' %}" 
+                                   @click="closeMenus"
+                                   class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                                    <i data-lucide="calendar" class="w-4 h-4 mr-3"></i>
+                                    Plany dietetyczne
+                                </a>
+                                
                                 <hr class="my-2">
                                 <a href="{% url 'logout_view' %}" 
-                                class="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                   @click="closeMenus"
+                                   class="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
                                     <i data-lucide="log-out" class="w-4 h-4 mr-3"></i>
                                     Wyloguj się
                                 </a>
                             </div>
                         </div>
                     {% else %}
-                        <a href="{% url 'login_view' %}" class="text-gray-700 hover:text-green-600 transition-colors duration-200">Logowanie</a>
-                        <a href="{% url 'register' %}" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <a href="{% url 'login_view' %}" class="nav-link text-gray-700 hover:text-green-600 transition-colors duration-200">Logowanie</a>
+                        <a href="{% url 'register' %}" class="btn-primary text-white px-6 py-2 rounded-full font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200">
                             Zamów teraz
                         </a>
                     {% endif %}
@@ -150,67 +287,62 @@
                 
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-700 hover:text-green-600">
-                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                            class="text-gray-700 hover:text-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-md p-1">
+                        <i data-lucide="menu" class="w-6 h-6" x-show="!mobileMenuOpen"></i>
+                        <i data-lucide="x" class="w-6 h-6" x-show="mobileMenuOpen"></i>
                     </button>
                 </div>
             </div>
         </div>
         
         <!-- Mobile menu -->
-        <div v-show="mobileMenuOpen" class="md:hidden bg-white border-t">
+        <div v-show="mobileMenuOpen" class="md:hidden bg-white border-t border-gray-100 mobile-menu"
+             :class="{'open': mobileMenuOpen}">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="{% url 'home_page' %}#home" class="block px-3 py-2 text-gray-700 hover:text-green-600">Strona główna</a>
-                <a href="{% url 'browse_diet_plans' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Plany</a>
-                <a href="{% url 'home_page' %}#how-it-works" class="block px-3 py-2 text-gray-700 hover:text-green-600">Jak to działa</a>
-                <a href="{% url 'home_page' %}#contact" class="block px-3 py-2 text-gray-700 hover:text-green-600">Kontakt</a>
+                <a href="{% url 'home_page' %}#home" @click="closeMenus" class="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors">Strona główna</a>
+                <a href="{% url 'browse_diet_plans' %}" @click="closeMenus" class="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors">Plany</a>
+                <a href="{% url 'home_page' %}#plans" @click="closeMenus" class="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors">Jak to działa</a>
+                <a href="#contact" @click="closeMenus" class="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors">Kontakt</a>
                 
-                {% if user.is_authenticated %}
-                    <hr class="my-2">
-                    {% if user.userprofile.role == 'manager' %}
-                        <a href="{% url 'manage_dashboard' %}" class="block px-3 py-2 bg-purple-500 text-white rounded-lg">Panel menadżera</a>
-                    {% else %}
-                        <a href="{% url 'client_dashboard' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Dashboard</a>
-                        <a href="{% url 'client_profile' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Profil</a>
-                    {% endif %}
-                    <a href="{% url 'logout_view' %}" class="block px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">Wyloguj</a>
-                {% else %}
-                    <a href="{% url 'login_view' %}" class="block px-3 py-2 text-gray-700 hover:text-green-600">Logowanie</a>
-                    <a href="{% url 'register' %}" class="block px-3 py-2 bg-green-500 text-white rounded-lg">Zamów teraz</a>
+                {% if not user.is_authenticated %}
+                <hr class="my-2">
+                <a href="{% url 'login_view' %}" @click="closeMenus" class="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors">Logowanie</a>
+                <a href="{% url 'register' %}" @click="closeMenus" class="block px-3 py-2 bg-green-500 text-white rounded-md font-semibold hover:bg-green-600 transition-colors">Zamów teraz</a>
                 {% endif %}
             </div>
         </div>
     </nav>
-
+    
     <!-- Main Content -->
-    <main class="pt-16">
+    <main class="relative pt-16">
         {% block content %}
         {% endblock content %}
     </main>
-
+    
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div class="col-span-1 md:col-span-2">
+    <footer id="contact" class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div class="md:col-span-2">
                     <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-lg">G</span>
+                        <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">G</span>
                         </div>
-                        <span class="text-xl font-bold">GastronomiaApp</span>
+                        <span class="text-2xl font-bold">GastronomiaApp</span>
                     </div>
-                    <p class="text-gray-400 mb-6 max-w-md">
-                        Rewolucjonizujemy sposób zamawiania cateringu dietetycznego. 
+                    <p class="text-gray-400 mb-6 max-w-md leading-relaxed">
                         Zdrowe posiłki dostosowane do Twoich potrzeb, dostarczane prosto do Twoich drzwi.
+                        Dołącz do tysięcy zadowolonych klientów.
                     </p>
                     <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-green-600 transition-all duration-200">
                             <i data-lucide="facebook" class="w-5 h-5"></i>
                         </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-green-600 transition-all duration-200">
                             <i data-lucide="instagram" class="w-5 h-5"></i>
                         </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-green-600 transition-all duration-200">
                             <i data-lucide="twitter" class="w-5 h-5"></i>
                         </a>
                     </div>
@@ -219,8 +351,8 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Szybkie linki</h3>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="#plans" class="hover:text-white transition-colors">Plany dietetyczne</a></li>
-                        <li><a href="#how-it-works" class="hover:text-white transition-colors">Jak to działa</a></li>
+                        <li><a href="{% url 'browse_diet_plans' %}" class="hover:text-white transition-colors">Plany dietetyczne</a></li>
+                        <li><a href="{% url 'home_page' %}#plans" class="hover:text-white transition-colors">Jak to działa</a></li>
                         <li><a href="#" class="hover:text-white transition-colors">O nas</a></li>
                         <li><a href="#contact" class="hover:text-white transition-colors">Kontakt</a></li>
                     </ul>
@@ -237,66 +369,98 @@
                 </div>
             </div>
             
-            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2025 GastronomiaApp. Autor: Marcin Malinowski</p>
+            <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 GastronomiaApp. Wszelkie prawa zastrzeżone. Stworzone z ❤️ dla zdrowego stylu życia.</p>
             </div>
         </div>
     </footer>
-
+    
+    <!-- Vue.js App -->
     <script>
         const { createApp } = Vue;
         
         createApp({
             data() {
                 return {
-                    mobileMenuOpen: false,
                     userMenuOpen: false,
-                    currentPlan: 'standard',
-                    duration: 'week'
+                    mobileMenuOpen: false,
+                    loading: false
                 }
             },
             mounted() {
                 // Initialize Lucide icons
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
                 
-                // Intersection Observer for animations
-                const observerOptions = {
-                    threshold: 0.1,
-                    rootMargin: '0px 0px -50px 0px'
-                };
-                
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('fade-in');
+                // Smooth scrolling for anchor links
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const target = document.querySelector(this.getAttribute('href'));
+                        if (target) {
+                            target.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
                         }
                     });
-                }, observerOptions);
-                
-                // Observe all elements with data-animate attribute
-                document.querySelectorAll('[data-animate]').forEach(el => {
-                    observer.observe(el);
                 });
-
-                // Close dropdown when clicking outside
+                
+                // Add loading animation to forms
+                document.querySelectorAll('form').forEach(form => {
+                    form.addEventListener('submit', () => {
+                        vm.loading = true;
+                    });
+                });
+                
+                // Store Vue instance reference for event handlers
+                const vm = this;
+                
+                // Close menus when clicking outside or on escape
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        vm.userMenuOpen = false;
+                        vm.mobileMenuOpen = false;
+                    }
+                });
+                
+                // Close menus when clicking outside
                 document.addEventListener('click', (e) => {
-                    if (!e.target.closest('.relative')) {
-                        this.userMenuOpen = false;
+                    // Close user menu if clicking outside
+                    const userMenuContainer = document.querySelector('[data-user-menu]');
+                    if (vm.userMenuOpen && userMenuContainer && !userMenuContainer.contains(e.target)) {
+                        vm.userMenuOpen = false;
+                    }
+                    
+                    // Close mobile menu if clicking outside
+                    const mobileMenuContainer = document.querySelector('.mobile-menu');
+                    const mobileMenuButton = document.querySelector('button[data-mobile-toggle]');
+                    if (vm.mobileMenuOpen && 
+                        (!mobileMenuContainer || !mobileMenuContainer.contains(e.target)) && 
+                        (!mobileMenuButton || !mobileMenuButton.contains(e.target))) {
+                        vm.mobileMenuOpen = false;
                     }
                 });
             },
             methods: {
-                scrollToSection(sectionId) {
-                    document.getElementById(sectionId)?.scrollIntoView({ 
-                        behavior: 'smooth' 
-                    });
-                    this.mobileMenuOpen = false;
-                },
                 toggleUserMenu() {
                     this.userMenuOpen = !this.userMenuOpen;
+                    // Close mobile menu if open
+                    if (this.userMenuOpen) {
+                        this.mobileMenuOpen = false;
+                    }
                 },
-                closeUserMenu() {
+                toggleMobileMenu() {
+                    this.mobileMenuOpen = !this.mobileMenuOpen;
+                    // Close user menu if open
+                    if (this.mobileMenuOpen) {
+                        this.userMenuOpen = false;
+                    }
+                },
+                closeMenus() {
                     this.userMenuOpen = false;
+                    this.mobileMenuOpen = false;
                 }
             }
         }).mount('#app');
