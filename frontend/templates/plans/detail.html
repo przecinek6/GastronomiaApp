@@ -1,418 +1,330 @@
 {% extends "base.html" %}
 {% load dish_filters %}
 
-{% block title %}{{ plan.name }} - Szczegóły planu{% endblock title %}
+{% block title %}{{ plan.name }} - Szczegóły planu dietetycznego{% endblock title %}
 
 {% block content %}
-<section class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
+<!-- Plan Hero Section -->
+<section class="relative pt-24 pb-16 overflow-hidden">
+    <!-- Background -->
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-green-50"></div>
+    
+    <!-- Floating shapes -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="floating-shape absolute top-20 right-20 w-32 h-32 bg-gradient-to-br from-green-200/20 to-blue-200/20 rounded-3xl transform rotate-45"></div>
+        <div class="floating-shape-delayed absolute bottom-20 left-20 w-24 h-24 bg-gradient-to-br from-orange-200/20 to-red-200/20 rounded-full"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Back Button -->
-        <div class="mb-6">
+        <div class="mb-8">
             <a href="{% url 'browse_diet_plans' %}" 
-               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
-                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+               class="inline-flex items-center text-slate-600 hover:text-slate-800 transition-colors group">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform"></i>
                 Powrót do listy planów
             </a>
         </div>
 
         <!-- Plan Header -->
-        <div class="bg-gradient-to-r from-green-500 to-blue-600 rounded-3xl p-8 mb-8 text-white">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                <div class="lg:col-span-2">
-                    <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ plan.name }}</h1>
-                    <p class="text-xl text-green-100 mb-6">{{ plan.description }}</p>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Main info -->
+            <div class="lg:col-span-8">
+                <div class="mb-6">
+                    <h1 class="text-5xl md:text-7xl font-black text-slate-800 mb-4 leading-none">
+                        {{ plan.name }}
+                    </h1>
+                    <p class="text-xl text-slate-600 max-w-2xl">{{ plan.description }}</p>
+                </div>
+            </div>
+            
+            <!-- Pricing Sidebar -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-3xl p-8 shadow-xl border border-slate-100 sticky top-24">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Cennik planu</h3>
                     
-                    <!-- Quick Stats -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="bg-white/20 rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">{{ meal_count }}/21</div>
-                            <div class="text-sm opacity-90">Posiłki</div>
+                    <!-- Main price -->
+                    <div class="text-center mb-6 p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl">
+                        <div class="text-4xl font-black text-slate-800 mb-2">{{ plan.weekly_price|floatformat:0 }} zł</div>
+                        <div class="text-slate-600 font-medium">za tydzień</div>
+                    </div>
+                    
+                    <!-- Price breakdown -->
+                    <div class="space-y-3 mb-8">
+                        <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                            <span class="text-slate-600">Miesięcznie</span>
+                            <span class="font-semibold text-slate-800">{{ plan.monthly_price|floatformat:0 }} zł</span>
                         </div>
-                        <div class="bg-white/20 rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">{{ avg_daily_calories }}</div>
-                            <div class="text-sm opacity-90">kcal/dzień</div>
+                        <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                            <span class="text-slate-600">Rocznie</span>
+                            <span class="font-semibold text-slate-800">{{ plan.yearly_price|floatformat:0 }} zł</span>
                         </div>
-                        <div class="bg-white/20 rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">{{ avg_daily_protein }}g</div>
-                            <div class="text-sm opacity-90">białko/dzień</div>
-                        </div>
-                        <div class="bg-white/20 rounded-lg p-3 text-center">
-                            <div class="text-2xl font-bold">{{ completion_percentage }}%</div>
-                            <div class="text-sm opacity-90">kompletny</div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-slate-600">Koszt na posiłek</span>
+                            <span class="font-semibold text-green-600">~{{ plan.weekly_price|div:21|floatformat:2 }} zł</span>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Pricing Card -->
-                <div class="bg-white rounded-2xl p-6 text-gray-800 shadow-xl">
-                    <h3 class="text-xl font-bold mb-4 text-center">Cennik</h3>
+                    
+                    <!-- Action buttons -->
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span>Tydzień:</span>
-                            <span class="text-2xl font-bold text-green-600">{{ plan.weekly_price }}zł</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span>Miesiąc:</span>
-                            <span class="text-xl font-bold text-blue-600">{{ plan.monthly_price }}zł</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span>Rok:</span>
-                            <span class="text-lg font-bold text-purple-600">{{ plan.yearly_price }}zł</span>
-                        </div>
-                    </div>
-                    <a href="{% url 'subscription_create' plan.pk %}" 
-                        class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg mt-6 font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl text-center block">
-                        Zamów plan
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Allergens Warning -->
-        {% if allergens %}
-            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-8 rounded-lg">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800">Alergeny w planie</h3>
-                        <div class="mt-2 text-sm text-red-700">
-                            <p class="mb-2">Ten plan zawiera potrawy z następującymi alergenami:</p>
-                            <div class="flex flex-wrap gap-2">
-                                {% for allergen in allergens %}
-                                    <span class="px-2 py-1 bg-red-200 text-red-800 rounded-full text-xs">{{ allergen }}</span>
-                                {% endfor %}
-                            </div>
-                        </div>
+                        <button class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 px-6 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-not-allowed opacity-75">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 inline mr-2"></i>
+                            Zamów plan (wkrótce)
+                        </button>
+                        
+                        {% comment %} <button class="w-full bg-slate-100 text-slate-600 py-3 px-6 rounded-2xl font-semibold hover:bg-slate-200 transition-colors">
+                            <i data-lucide="heart" class="w-4 h-4 inline mr-2"></i>
+                            Dodaj do ulubionych
+                        </button> {% endcomment %}
                     </div>
                 </div>
-            </div>
-        {% endif %}
-
-        <!-- Meal Grid -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
-            <div class="p-6 border-b border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800">Siatka posiłków</h2>
-                <p class="text-gray-600">Kliknij na danie, aby zobaczyć jego szczegóły</p>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 min-w-[120px]">Dzień</th>
-                            {% for meal_type, meal_name in meal_types %}
-                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 min-w-[250px]">
-                                    <div class="flex items-center justify-center">
-                                        {% if meal_type == 'breakfast' %}
-                                            <i data-lucide="sunrise" class="w-4 h-4 mr-2 text-yellow-500"></i>
-                                        {% elif meal_type == 'lunch' %}
-                                            <i data-lucide="sun" class="w-4 h-4 mr-2 text-orange-500"></i>
-                                        {% else %}
-                                            <i data-lucide="moon" class="w-4 h-4 mr-2 text-purple-500"></i>
-                                        {% endif %}
-                                        {{ meal_name }}
-                                    </div>
-                                </th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for day_data in grid_data %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-800">
-                                    {{ day_data.day_name }}
-                                </td>
-                                {% for meal_type, meal_name in meal_types %}
-                                    <td class="px-6 py-4">
-                                        {% if day_data.meals|lookup:meal_type %}
-                                            {% with meal_plan=day_data.meals|lookup:meal_type %}
-                                                <div class="dish-card bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-green-50 hover:border-green-200 border-2 border-transparent transition-all duration-200"
-                                                     data-dish-id="{{ meal_plan.dish.id }}">
-                                                    <h4 class="font-semibold text-gray-800 mb-2">{{ meal_plan.dish.name }}</h4>
-                                                    <div class="text-sm text-gray-600 space-y-1">
-                                                        <div class="flex justify-between">
-                                                            <span>Kalorie:</span>
-                                                            <span class="font-medium">{{ meal_plan.dish.total_calories|floatformat:0 }} kcal</span>
-                                                        </div>
-                                                        <div class="flex justify-between">
-                                                            <span>Białko:</span>
-                                                            <span class="font-medium">{{ meal_plan.dish.total_protein|floatformat:1 }}g</span>
-                                                        </div>
-                                                        <div class="flex justify-between">
-                                                            <span>Tłuszcze:</span>
-                                                            <span class="font-medium">{{ meal_plan.dish.total_fat|floatformat:1 }}g</span>
-                                                        </div>
-                                                    </div>
-                                                    {% if meal_plan.dish.allergens %}
-                                                        <div class="mt-2 flex flex-wrap gap-1">
-                                                            {% for allergen in meal_plan.dish.allergens|split:"," %}
-                                                                <span class="px-1 py-0.5 bg-red-100 text-red-700 rounded text-xs">{{ allergen|trim }}</span>
-                                                            {% endfor %}
-                                                        </div>
-                                                    {% endif %}
-                                                    <div class="mt-2 text-xs text-green-600 font-medium">
-                                                        Kliknij aby zobaczyć szczegóły →
-                                                    </div>
-                                                </div>
-                                            {% endwith %}
-                                        {% else %}
-                                            <div class="bg-gray-100 rounded-lg p-4 text-center text-gray-500">
-                                                <i data-lucide="utensils" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                                                <p class="text-sm">Brak dania</p>
-                                            </div>
-                                        {% endif %}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Plan Summary -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <!-- Nutritional Summary -->
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h3 class="text-xl font-bold text-gray-800 mb-6">Podsumowanie nutritional</h3>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="text-center bg-blue-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-blue-800">{{ avg_daily_calories }}</div>
-                        <div class="text-sm text-blue-600">Średnie kcal/dzień</div>
-                    </div>
-                    <div class="text-center bg-green-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-green-800">{{ avg_daily_protein }}g</div>
-                        <div class="text-sm text-green-600">Średnie białko/dzień</div>
-                    </div>
-                    <div class="text-center bg-yellow-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-yellow-800">{{ avg_daily_fat }}g</div>
-                        <div class="text-sm text-yellow-600">Średnie tłuszcze/dzień</div>
-                    </div>
-                    <div class="text-center bg-purple-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-purple-800">{{ weekly_cost|floatformat:2 }}zł</div>
-                        <div class="text-sm text-purple-600">Koszt składników</div>
-                    </div>
-                </div>
-
-                <!-- Progress Bar -->
-                <div class="mb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm font-medium text-gray-700">Kompletność planu</span>
-                        <span class="text-sm text-gray-600">{{ completion_percentage }}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div class="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all duration-300" 
-                             style="width: {{ completion_percentage }}%"></div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">{{ meal_count }} z 21 posiłków skonfigurowanych</p>
-                </div>
-            </div>
-
-            <!-- Similar Plans -->
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                <h3 class="text-xl font-bold text-gray-800 mb-6">Podobne plany</h3>
-                
-                {% for similar_plan in similar_plans %}
-                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <h4 class="font-semibold text-gray-800 mb-2">{{ similar_plan.name }}</h4>
-                        <p class="text-sm text-gray-600 mb-3">{{ similar_plan.description|truncatewords:10 }}</p>
-                        <div class="flex justify-between items-center">
-                            <span class="font-medium text-green-600">{{ similar_plan.weekly_price }}zł/tyg</span>
-                            <a href="{% url 'diet_plan_detail' similar_plan.pk %}" 
-                               class="text-blue-600 hover:text-blue-700 text-sm">
-                                Zobacz →
-                            </a>
-                        </div>
-                    </div>
-                {% endfor %}
-                
-                <a href="{% url 'browse_diet_plans' %}" 
-                   class="block text-center bg-gray-100 hover:bg-gray-200 py-2 rounded-lg text-gray-700 transition-colors">
-                    Zobacz wszystkie plany
-                </a>
-            </div>
-        </div>
-
-        <!-- Call to Action -->
-        <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl p-8 text-white text-center">
-            <h2 class="text-3xl font-bold mb-4">Gotowy na zmianę?</h2>
-            <p class="text-lg mb-6 opacity-90">
-                Rozpocznij swoją przygodę ze zdrowym odżywianiem z planem {{ plan.name }}
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button class="bg-white text-gray-800 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors opacity-50 cursor-not-allowed">
-                    Zamów plan (wkrótce)
-                </button>
-                <a href="{% url 'browse_diet_plans' %}" 
-                   class="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-colors">
-                    Porównaj z innymi planami
-                </a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Dish Detail Modal -->
-<div id="dish-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div id="modal-content">
-                <!-- Content will be loaded here -->
+<!-- Meal Plan Grid -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-black text-slate-800 mb-4">
+                Twoje <span class="text-green-500">posiłki</span> przez cały tydzień
+            </h2>
+            <p class="text-xl text-slate-600 max-w-2xl mx-auto">
+                Sprawdź dokładnie co będziesz jadł każdego dnia
+            </p>
+        </div>
+
+        <!-- Weekly Meal Grid -->
+        <div class="bg-slate-50 rounded-3xl p-8 overflow-x-auto">
+            <div class="min-w-[800px]">
+                <!-- Header with meal types -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="text-center">
+                        <h3 class="font-bold text-slate-800">Dzień</h3>
+                    </div>
+                    {% for meal_type, meal_name in meal_types %}
+                    <div class="text-center">
+                        <h3 class="font-bold text-slate-800">{{ meal_name }}</h3>
+                        <div class="text-sm text-slate-500">
+                            {% if meal_type == 'breakfast' %}🌅
+                            {% elif meal_type == 'lunch' %}🌞
+                            {% elif meal_type == 'dinner' %}🌙{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Days and meals -->
+                {% for day_data in grid_data %}
+                <div class="grid grid-cols-4 gap-4 mb-4">
+                    <!-- Day name -->
+                    <div class="flex items-center justify-center bg-white rounded-xl p-4 shadow-sm">
+                        <div class="text-center">
+                            <div class="font-bold text-slate-800">{{ day_data.day_name }}</div>
+                            <div class="text-sm text-slate-500">Dzień {{ day_data.day_num }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Meals for this day -->
+                    {% for meal_type, meal_name in meal_types %}
+                        {% with meal=day_data.meals|lookup:meal_type %}
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            {% if meal %}
+                                <!-- Dish image or placeholder -->
+                                <div class="relative mb-3 h-20 overflow-hidden rounded-lg">
+                                    {% if meal.dish.image %}
+                                    <img src="{{ meal.dish.image.url }}" alt="{{ meal.dish.name }}" 
+                                         class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div class="w-full h-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                                        <i data-lucide="utensils" class="w-6 h-6 text-green-500"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Dish info -->
+                                <h4 class="font-semibold text-slate-800 text-sm mb-2 line-clamp-2">{{ meal.dish.name }}</h4>
+                            {% else %}
+                                <!-- Empty meal slot -->
+                                <div class="h-24 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-lg">
+                                    <div class="text-center">
+                                        <i data-lucide="plus" class="w-6 h-6 text-slate-300 mx-auto mb-1"></i>
+                                        <div class="text-xs text-slate-400">Brak posiłku</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Nutrition Summary -->
+<section class="py-16 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-black text-slate-800 mb-4">
+                Wartości <span class="text-green-500">odżywcze</span>
+            </h2>
+            <p class="text-xl text-slate-600">Pełna analiza składników odżywczych</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <!-- Daily nutrition -->
+            <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Dzienne wartości</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <span class="text-slate-600">Kalorie</span>
+                        <span class="text-2xl font-bold text-slate-800">{{ avg_daily_calories }}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <span class="text-slate-600">Białko</span>
+                        <span class="text-2xl font-bold text-green-600">{{ avg_daily_protein|floatformat:1 }}g</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <span class="text-slate-600">Tłuszcze</span>
+                        <span class="text-2xl font-bold text-blue-600">{{ avg_daily_fat|floatformat:1 }}g</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weekly totals -->
+            <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Tygodniowe sumy</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <span class="text-slate-600">Kalorie</span>
+                        <span class="text-2xl font-bold text-slate-800">{{ avg_daily_calories|multiply:7|floatformat:0 }}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <span class="text-slate-600">Białko</span>
+                        <span class="text-2xl font-bold text-green-600">{{ avg_daily_protein|multiply:7|floatformat:0 }}g</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <span class="text-slate-600">Koszt składników</span>
+                        <span class="text-2xl font-bold text-orange-600">{{ weekly_cost|floatformat:2 }} zł</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Allergens -->
+            <div class="bg-white rounded-3xl p-8 shadow-lg border border-slate-100">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Alergeny w planie</h3>
+                {% if allergens %}
+                <div class="space-y-2">
+                    {% for allergen in allergens %}
+                    <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 text-center">
+                        <span class="text-orange-800 font-medium">{{ allergen }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i data-lucide="shield-check" class="w-12 h-12 text-green-500 mx-auto mb-4"></i>
+                    <p class="text-slate-600">Brak znanych alergenów w tym planie</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-20 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 relative overflow-hidden">
+    <!-- Background pattern -->
+    <div class="absolute inset-0">
+        <div class="absolute inset-0 bg-black/10"></div>
+        <div class="absolute top-0 left-0 w-full h-full">
+            <div class="floating-shape absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full"></div>
+            <div class="floating-shape-delayed absolute bottom-20 right-20 w-40 h-40 bg-white/5 rounded-3xl transform rotate-45"></div>
+        </div>
+    </div>
+    
+    <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+        <h2 class="text-4xl md:text-6xl font-black mb-6">
+            Gotowy na zdrową zmianę?
+        </h2>
+        <p class="text-xl md:text-2xl mb-10 opacity-90 max-w-2xl mx-auto">
+            Rozpocznij swoją przygodę ze zdrowym odżywianiem z planem <strong>{{ plan.name }}</strong>
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <button class="bg-white text-green-600 px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-not-allowed opacity-75">
+                <i data-lucide="shopping-cart" class="w-5 h-5 inline mr-2"></i>
+                Zamów plan (wkrótce)
+            </button>
+            
+            <a href="{% url 'browse_diet_plans' %}" class="border-2 border-white text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-white hover:text-green-600 transition-all duration-300">
+                <i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i>
+                Przeglądaj inne plany
+            </a>
+        </div>
+    </div>
+</section>
+
+<style>
+/* Animations matching home page */
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes floatDelayed {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(-3deg); }
+}
+
+.floating-shape {
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-shape-delayed {
+    animation: floatDelayed 8s ease-in-out infinite;
+    animation-delay: -2s;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Sticky positioning for pricing sidebar */
+@media (min-width: 1024px) {
+    .sticky {
+        position: sticky;
+    }
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Lucide icons
-    lucide.createIcons();
-    
-    // Dish modal functionality
-    const modal = document.getElementById('dish-modal');
-    const modalContent = document.getElementById('modal-content');
-    const dishCards = document.querySelectorAll('.dish-card');
-    
-    dishCards.forEach(card => {
-        card.addEventListener('click', function() {
-            const dishId = this.dataset.dishId;
-            loadDishDetails(dishId);
-        });
-    });
-    
-    function loadDishDetails(dishId) {
-        modalContent.innerHTML = '<div class="p-8 text-center"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div><p class="mt-4 text-gray-600">Ładowanie...</p></div>';
-        modal.classList.remove('hidden');
-        
-        fetch(`/api/dish/${dishId}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                displayDishDetails(data);
-            })
-            .catch(error => {
-                modalContent.innerHTML = `
-                    <div class="p-8 text-center">
-                        <i data-lucide="alert-circle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i>
-                        <p class="text-red-600">Błąd podczas ładowania szczegółów dania</p>
-                        <button onclick="closeDishModal()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded-lg">Zamknij</button>
-                    </div>
-                `;
-                lucide.createIcons();
-            });
-    }
-    
-    function displayDishDetails(dish) {
-        const allergensHtml = dish.allergens.length > 0 
-            ? dish.allergens.map(allergen => `<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">${allergen}</span>`).join('')
-            : '<span class="text-gray-500">Brak alergenów</span>';
-        
-        const ingredientsHtml = dish.ingredients.map(ingredient => `
-            <tr class="border-t">
-                <td class="py-2 pr-4 font-medium">${ingredient.name}</td>
-                <td class="py-2 px-2 text-center">${ingredient.quantity_grams}g</td>
-                <td class="py-2 px-2 text-center">${ingredient.calories}</td>
-                <td class="py-2 px-2 text-center">${ingredient.protein}g</td>
-                <td class="py-2 px-2 text-center">${ingredient.fat}g</td>
-            </tr>
-        `).join('');
-        
-        modalContent.innerHTML = `
-            <div class="p-6">
-                <!-- Header -->
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">${dish.name}</h2>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                            ${dish.meal_type}
-                        </span>
-                    </div>
-                    <button onclick="closeDishModal()" class="text-gray-400 hover:text-gray-600">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-                
-                <!-- Image -->
-                ${dish.image_url ? `<img src="${dish.image_url}" alt="${dish.name}" class="w-full h-48 object-cover rounded-lg mb-6">` : ''}
-                
-                <!-- Description -->
-                ${dish.description ? `<p class="text-gray-600 mb-6">${dish.description}</p>` : ''}
-                
-                <!-- Nutritional Summary -->
-                <div class="grid grid-cols-4 gap-4 mb-6">
-                    <div class="text-center bg-blue-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-blue-800">${dish.total_calories}</div>
-                        <div class="text-sm text-blue-600">kcal</div>
-                    </div>
-                    <div class="text-center bg-green-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-green-800">${dish.total_protein}g</div>
-                        <div class="text-sm text-green-600">białko</div>
-                    </div>
-                    <div class="text-center bg-yellow-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-yellow-800">${dish.total_fat}g</div>
-                        <div class="text-sm text-yellow-600">tłuszcze</div>
-                    </div>
-                    <div class="text-center bg-purple-50 rounded-lg p-4">
-                        <div class="text-2xl font-bold text-purple-800">${dish.total_cost}zł</div>
-                        <div class="text-sm text-purple-600">koszt</div>
-                    </div>
-                </div>
-                
-                <!-- Allergens -->
-                <div class="mb-6">
-                    <h3 class="font-semibold text-gray-800 mb-3">Alergeny</h3>
-                    <div class="flex flex-wrap gap-2">${allergensHtml}</div>
-                </div>
-                
-                <!-- Ingredients -->
-                <div class="mb-6">
-                    <h3 class="font-semibold text-gray-800 mb-3">Składniki</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="py-2 pr-4 text-left font-medium">Składnik</th>
-                                    <th class="py-2 px-2 text-center font-medium">Ilość</th>
-                                    <th class="py-2 px-2 text-center font-medium">Kcal</th>
-                                    <th class="py-2 px-2 text-center font-medium">Białko</th>
-                                    <th class="py-2 px-2 text-center font-medium">Tłuszcze</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${ingredientsHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <!-- Close Button -->
-                <div class="text-center">
-                    <button onclick="closeDishModal()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                        Zamknij
-                    </button>
-                </div>
-            </div>
-        `;
-        
+    if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
     
-    // Close modal on background click
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeDishModal();
-        }
+    // Smooth scroll for internal links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
     });
 });
-
-function closeDishModal() {
-    document.getElementById('dish-modal').classList.add('hidden');
-}
 </script>
+
 {% endblock content %}

@@ -1,93 +1,134 @@
 {% extends "base.html" %}
 
-{% block title %}Przeglądaj plany dietetyczne{% endblock title %}
+{% block title %}Plany dietetyczne - GastronomiaApp{% endblock title %}
 
 {% block content %}
-<section class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                Wybierz idealny plan dietetyczny
-            </h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                Odkryj nasze starannie opracowane plany dietetyczne dostosowane do Twoich potrzeb i stylu życia
-            </p>
-        </div>
 
-        <!-- Filters and Sort -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <form method="get" class="flex flex-col lg:flex-row gap-4 items-end">
+<!-- Hero Section for Plans -->
+<section class="relative bg-gradient-to-br from-slate-50 via-white to-green-50 pt-24 pb-16 overflow-hidden">
+    <!-- Floating geometric shapes -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="floating-shape absolute top-20 right-20 w-32 h-32 bg-gradient-to-br from-green-200/20 to-blue-200/20 rounded-3xl transform rotate-45"></div>
+        <div class="floating-shape-delayed absolute bottom-20 left-20 w-24 h-24 bg-gradient-to-br from-orange-200/20 to-red-200/20 rounded-full"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-5xl md:text-7xl font-black text-slate-800 mb-6 leading-none">
+            Wybierz <span class="bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">idealny</span>
+            <span class="block">plan dla siebie</span>
+        </h1>
+        <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
+            Każdy plan został starannie opracowany przez naszych dietetyków i dostosowany do różnych potrzeb żywieniowych
+        </p>
+        
+    </div>
+</section>
+
+<!-- Filters Section -->
+<section class="py-8 bg-white border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <form method="get" class="bg-slate-50 rounded-2xl p-6 shadow-inner">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                 <!-- Search -->
-                <div class="flex-1">
-                    <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Wyszukaj plan</label>
+                <div class="md:col-span-4">
+                    <label for="search" class="block text-sm font-semibold text-slate-700 mb-2">
+                        <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
+                        Wyszukaj plan
+                    </label>
                     <input type="text" 
                            name="search" 
                            id="search"
                            value="{{ search }}"
-                           placeholder="Wprowadź nazwę planu lub słowo kluczowe..."
-                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                           placeholder="Np. keto, vegan, fitness..."
+                           class="w-full px-4 py-3 rounded-xl border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none transition-all">
                 </div>
 
                 <!-- Price Range -->
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label for="min_price" class="block text-sm font-semibold text-gray-700 mb-2">Cena od</label>
+                <div class="md:col-span-3">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">
+                        <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-1"></i>
+                        Zakres cenowy (zł/tydzień)
+                    </label>
+                    <div class="flex space-x-2">
                         <input type="number" 
                                name="min_price" 
-                               id="min_price"
                                value="{{ min_price }}"
-                               placeholder="0"
+                               placeholder="Od"
                                min="0"
                                step="10"
-                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
-                    </div>
-                    <div>
-                        <label for="max_price" class="block text-sm font-semibold text-gray-700 mb-2">Cena do</label>
+                               class="w-full px-3 py-3 rounded-xl border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none transition-all">
                         <input type="number" 
                                name="max_price" 
-                               id="max_price"
                                value="{{ max_price }}"
-                               placeholder="500"
+                               placeholder="Do"
                                min="0"
                                step="10"
-                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                               class="w-full px-3 py-3 rounded-xl border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none transition-all">
                     </div>
                 </div>
 
                 <!-- Sort -->
-                <div>
-                    <label for="sort" class="block text-sm font-semibold text-gray-700 mb-2">Sortuj według</label>
-                    <select name="sort" 
-                            id="sort"
-                            class="px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:outline-none transition-colors">
+                <div class="md:col-span-3">
+                    <label for="sort_by" class="block text-sm font-semibold text-slate-700 mb-2">
+                        <i data-lucide="arrow-up-down" class="w-4 h-4 inline mr-1"></i>
+                        Sortuj według
+                    </label>
+                    <select name="sort_by" 
+                            id="sort_by"
+                            class="w-full px-4 py-3 rounded-xl border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none transition-all">
                         <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Cena: od najniższej</option>
                         <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Cena: od najwyższej</option>
-                        <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Nazwa: A-Z</option>
-                        <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Nazwa: Z-A</option>
+                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Nazwa: A-Z</option>
+                        <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Najnowsze</option>
                     </select>
                 </div>
 
-                <!-- Buttons -->
-                <div class="flex gap-2">
+                <!-- Filter Button -->
+                <div class="md:col-span-2">
                     <button type="submit" 
-                            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
-                        <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
+                            class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i data-lucide="filter" class="w-4 h-4 inline mr-2"></i>
                         Filtruj
                     </button>
-                    <a href="{% url 'browse_diet_plans' %}" 
-                       class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                        <i data-lucide="x" class="w-4 h-4 inline mr-1"></i>
-                        Wyczyść
-                    </a>
                 </div>
-            </form>
-        </div>
+            </div>
+            
+            <!-- Active filters display -->
+            {% if search or min_price or max_price or sort_by != 'price_asc' %}
+            <div class="mt-4 flex flex-wrap gap-2">
+                <span class="text-sm text-slate-600">Aktywne filtry:</span>
+                {% if search %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    "{{ search }}"
+                    <a href="?{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}sort_by={{ sort_by }}" class="ml-2 hover:text-green-600">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </a>
+                </span>
+                {% endif %}
+                {% if min_price or max_price %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                    Cena: {{ min_price|default:"0" }}-{{ max_price|default:"∞" }} zł
+                    <a href="?{% if search %}search={{ search }}&{% endif %}sort_by={{ sort_by }}" class="ml-2 hover:text-blue-600">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </a>
+                </span>
+                {% endif %}
+                <a href="{% url 'browse_diet_plans' %}" class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                    Wyczyść wszystkie
+                    <i data-lucide="refresh-cw" class="w-3 h-3 ml-1"></i>
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</section>
 
-        <!-- Results Header -->
-        <div class="flex justify-between items-center mb-6">
+<!-- Results Header & Compare -->
+<section class="py-6 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">
+                <h2 class="text-2xl font-bold text-slate-800">
                     {% if total_count == 1 %}
                         Znaleziono {{ total_count }} plan
                     {% elif total_count < 5 %}
@@ -97,147 +138,183 @@
                     {% endif %}
                 </h2>
                 {% if search %}
-                    <p class="text-gray-600">dla zapytania: "{{ search }}"</p>
+                    <p class="text-slate-600">dla zapytania: <span class="font-medium">"{{ search }}"</span></p>
                 {% endif %}
             </div>
             
+            <!-- Compare Button -->
             {% if enriched_plans|length > 1 %}
-                <div>
-                    <button id="compare-selected" 
-                            class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled>
-                        <i data-lucide="git-compare" class="w-4 h-4 inline mr-2"></i>
-                        Porównaj wybrane (<span id="compare-count">0</span>)
-                    </button>
-                </div>
+            <div class="flex items-center space-x-4">
+                <button id="compare-selected" 
+                        class="relative bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+                        disabled>
+                    <i data-lucide="git-compare" class="w-4 h-4 inline mr-2"></i>
+                    Porównaj wybrane
+                    <span id="compare-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">0</span>
+                </button>
+            </div>
             {% endif %}
         </div>
+    </div>
+</section>
 
-        <!-- Plans Grid -->
+<!-- Plans Grid -->
+<section class="py-12 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {% if enriched_plans %}
-            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {% for enriched_plan in enriched_plans %}
                     {% with plan=enriched_plan.plan %}
-                        <div class="bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 plan-card">
-                            <!-- Plan Header -->
-                            <div class="p-6 bg-gradient-to-r from-green-500 to-blue-600 text-white relative">
-                                <!-- Compare Checkbox -->
-                                <div class="absolute top-4 right-4">
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" 
-                                               class="compare-checkbox w-5 h-5 text-green-600 bg-white border-white rounded focus:ring-green-500"
-                                               data-plan-id="{{ plan.id }}"
-                                               data-plan-name="{{ plan.name }}">
-                                        <span class="ml-2 text-sm">Porównaj</span>
-                                    </label>
-                                </div>
+                        <div class="group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-slate-100 hover:border-green-200 transform hover:-translate-y-2 plan-card" data-animate data-delay="{{ forloop.counter|add:1 }}00">
+                            
+                            <!-- Compare Checkbox -->
+                            <div class="absolute top-4 right-4 z-10">
+                                <label class="flex items-center cursor-pointer bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-sm hover:bg-white transition-colors">
+                                    <input type="checkbox" 
+                                           class="compare-checkbox w-4 h-4 text-green-600 bg-white border-slate-300 rounded focus:ring-green-500"
+                                           data-plan-id="{{ plan.id }}"
+                                           data-plan-name="{{ plan.name }}">
+                                    <span class="ml-2 text-sm text-slate-700 font-medium">Porównaj</span>
+                                </label>
+                            </div>
 
-                                <h3 class="text-2xl font-bold mb-2">{{ plan.name }}</h3>
-                                <p class="text-green-100 mb-4">{{ plan.description|truncatewords:15 }}</p>
+                            <!-- Plan Image or Placeholder -->
+                            <div class="relative h-48 overflow-hidden">
+                                {% if plan.image %}
+                                <img src="{{ plan.image.url }}" alt="{{ plan.name }}" 
+                                     class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                                    <i data-lucide="utensils" class="w-16 h-16 text-green-500"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Plan Content -->
+                            <div class="p-6">
+                                <h3 class="text-2xl font-bold text-slate-800 mb-2">{{ plan.name }}</h3>
+                                <p class="text-slate-600 mb-6 line-clamp-2">{{ plan.description }}</p>
                                 
-                                <!-- Completion Badge -->
-                                <div class="flex items-center justify-between">
-                                    <span class="bg-white/20 px-3 py-1 rounded-full text-sm">
-                                        {{ enriched_plan.meal_count }}/21 posiłków
-                                    </span>
-                                    <span class="text-sm opacity-90">
-                                        {{ enriched_plan.completion_percentage }}% kompletny
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Pricing -->
-                            <div class="p-6 border-b border-gray-100">
-                                <div class="grid grid-cols-3 gap-4 text-center">
-                                    <div>
-                                        <div class="text-2xl font-bold text-green-600">{{ plan.weekly_price }}zł</div>
-                                        <div class="text-sm text-gray-500">Tydzień</div>
+                                
+                                <!-- Pricing -->
+                                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 mb-6">
+                                    <div class="flex items-baseline justify-center">
+                                        <span class="text-3xl font-black text-slate-800">{{ plan.weekly_price|floatformat:0 }}</span>
+                                        <span class="text-sm text-slate-500 ml-2">zł/tydzień</span>
                                     </div>
-                                    <div>
-                                        <div class="text-xl font-bold text-blue-600">{{ plan.monthly_price }}zł</div>
-                                        <div class="text-sm text-gray-500">Miesiąc</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-lg font-bold text-purple-600">{{ plan.yearly_price }}zł</div>
-                                        <div class="text-sm text-gray-500">Rok</div>
+                                    <div class="text-center text-sm text-slate-600 mt-1">
+                                        ~{{ plan.monthly_price|floatformat:0 }} zł/miesiąc
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Nutritional Summary -->
-                            <div class="p-6 border-b border-gray-100">
-                                <h4 class="font-semibold text-gray-800 mb-3">Średnie wartości dzienne</h4>
-                                <div class="grid grid-cols-3 gap-4 text-center">
-                                    <div class="bg-blue-50 rounded-lg p-3">
-                                        <div class="text-lg font-bold text-blue-800">{{ enriched_plan.avg_calories }}</div>
-                                        <div class="text-xs text-blue-600">kcal</div>
-                                    </div>
-                                    <div class="bg-green-50 rounded-lg p-3">
-                                        <div class="text-lg font-bold text-green-800">{{ enriched_plan.avg_protein }}g</div>
-                                        <div class="text-xs text-green-600">białko</div>
-                                    </div>
-                                    <div class="bg-yellow-50 rounded-lg p-3">
-                                        <div class="text-lg font-bold text-yellow-800">{{ enriched_plan.avg_fat }}g</div>
-                                        <div class="text-xs text-yellow-600">tłuszcze</div>
-                                    </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="space-y-3">
+                                    <a href="{% url 'diet_plan_detail' plan.pk %}" 
+                                       class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 block text-center">
+                                        Zobacz szczegóły
+                                        <i data-lucide="arrow-right" class="w-4 h-4 inline ml-2"></i>
+                                    </a>
+                                    
+                                    <button class="w-full bg-slate-100 text-slate-600 py-3 px-6 rounded-xl font-semibold hover:bg-slate-200 transition-colors cursor-not-allowed opacity-50">
+                                        Zamów plan (wkrótce)
+                                    </button>
                                 </div>
-                            </div>
-
-                            <!-- Allergens -->
-                            {% if enriched_plan.allergens %}
-                                <div class="p-6 border-b border-gray-100">
-                                    <h4 class="font-semibold text-gray-800 mb-3">Alergeny w planie</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        {% for allergen in enriched_plan.allergens %}
-                                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">{{ allergen }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            {% endif %}
-
-                            <!-- Actions -->
-                            <div class="p-6 space-y-3">
-                                <a href="{% url 'diet_plan_detail' plan.pk %}" 
-                                   class="block w-full bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl">
-                                    Zobacz szczegóły planu
-                                </a>
-                                <button class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors opacity-50 cursor-not-allowed">
-                                    Zamów plan (wkrótce)
-                                </button>
                             </div>
                         </div>
                     {% endwith %}
                 {% endfor %}
             </div>
         {% else %}
+            <!-- No results state -->
             <div class="text-center py-16">
-                <i data-lucide="search-x" class="w-20 h-20 text-gray-400 mx-auto mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Nie znaleziono planów</h3>
-                <p class="text-gray-600 mb-8">Spróbuj zmienić kryteria wyszukiwania lub usuń filtry</p>
+                <div class="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex items-center justify-center">
+                    <i data-lucide="search-x" class="w-12 h-12 text-slate-400"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-4">Nie znaleziono planów</h3>
+                <p class="text-slate-600 mb-8 max-w-md mx-auto">
+                    Spróbuj zmienić kryteria wyszukiwania lub usuń filtry, aby zobaczyć więcej rezultatów.
+                </p>
                 <a href="{% url 'browse_diet_plans' %}" 
-                   class="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                   class="inline-flex items-center bg-green-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors shadow-lg hover:shadow-xl">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
                     Zobacz wszystkie plany
                 </a>
             </div>
         {% endif %}
-
-        <!-- Call to Action -->
-        <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl p-8 text-white text-center">
-            <h2 class="text-3xl font-bold mb-4">Nie możesz się zdecydować?</h2>
-            <p class="text-lg mb-6 opacity-90">
-                Skorzystaj z naszego kalkulatora i znajdź plan idealnie dopasowany do Twoich potrzeb
-            </p>
-            <button class="bg-white text-gray-800 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors opacity-50 cursor-not-allowed">
-                Kalkulator planu (wkrótce)
-            </button>
-        </div>
     </div>
 </section>
+
+
+<style>
+/* Animations matching home page */
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes floatDelayed {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(-3deg); }
+}
+
+.floating-shape {
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-shape-delayed {
+    animation: floatDelayed 8s ease-in-out infinite;
+    animation-delay: -2s;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Scroll animations */
+[data-animate] {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.8s ease;
+}
+
+[data-animate].animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Lucide icons
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    // Scroll animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const delay = entry.target.getAttribute('data-delay') || 0;
+                setTimeout(() => {
+                    entry.target.classList.add('animate');
+                }, delay);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('[data-animate]').forEach(el => {
+        observer.observe(el);
+    });
     
     // Compare functionality
     const compareCheckboxes = document.querySelectorAll('.compare-checkbox');
@@ -246,73 +323,47 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let selectedPlans = [];
     
-    compareCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const planId = this.dataset.planId;
-            const planName = this.dataset.planName;
-            
-            if (this.checked) {
-                if (selectedPlans.length < 3) {
-                    selectedPlans.push({ id: planId, name: planName });
+    if (compareButton && compareCount) {
+        compareCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const planId = this.dataset.planId;
+                const planName = this.dataset.planName;
+                
+                if (this.checked) {
+                    if (selectedPlans.length < 3) {
+                        selectedPlans.push({ id: planId, name: planName });
+                    } else {
+                        this.checked = false;
+                        alert('Możesz porównać maksymalnie 3 plany jednocześnie.');
+                        return;
+                    }
                 } else {
-                    this.checked = false;
-                    alert('Możesz porównać maksymalnie 3 plany jednocześnie.');
+                    selectedPlans = selectedPlans.filter(plan => plan.id !== planId);
                 }
-            } else {
-                selectedPlans = selectedPlans.filter(plan => plan.id !== planId);
-            }
-            
-            updateCompareButton();
+                
+                // Update UI
+                compareCount.textContent = selectedPlans.length;
+                compareButton.disabled = selectedPlans.length < 2;
+                
+                if (selectedPlans.length >= 2) {
+                    compareButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    compareButton.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            });
         });
-    });
-    
-    function updateCompareButton() {
-        compareCount.textContent = selectedPlans.length;
-        compareButton.disabled = selectedPlans.length < 2;
         
-        if (selectedPlans.length >= 2) {
-            compareButton.classList.remove('disabled:opacity-50', 'disabled:cursor-not-allowed');
-        } else {
-            compareButton.classList.add('disabled:opacity-50', 'disabled:cursor-not-allowed');
-        }
+        // Compare button click
+        compareButton.addEventListener('click', function() {
+            if (selectedPlans.length >= 2) {
+                const planIds = selectedPlans.map(plan => plan.id);
+                const url = new URL('{% url "compare_diet_plans" %}', window.location.origin);
+                planIds.forEach(id => url.searchParams.append('plans', id));
+                window.location.href = url.toString();
+            }
+        });
     }
-    
-    compareButton.addEventListener('click', function() {
-        if (selectedPlans.length >= 2) {
-            const planIds = selectedPlans.map(plan => plan.id);
-            const queryString = planIds.map(id => `plans=${id}`).join('&');
-            window.location.href = `/plans/compare/?${queryString}`;
-        }
-    });
-    
-    // Auto-submit form on sort change
-    document.getElementById('sort').addEventListener('change', function() {
-        this.form.submit();
-    });
-    
-    // Smooth animations
-    const cards = document.querySelectorAll('.plan-card');
-    cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
-        card.classList.add('animate-fade-in');
-    });
 });
 </script>
 
-<style>
-@keyframes fade-in {
-    from { 
-        opacity: 0; 
-        transform: translateY(20px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
-}
-
-.animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-}
-</style>
 {% endblock content %}

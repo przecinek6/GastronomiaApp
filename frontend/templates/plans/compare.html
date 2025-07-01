@@ -1,243 +1,226 @@
 {% extends "base.html" %}
 {% load dish_filters %}
 
-{% block title %}Porównanie planów dietetycznych{% endblock title %}
+{% block title %}Porównanie planów dietetycznych - GastronomiaApp{% endblock title %}
 
 {% block content %}
-<section class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
+<!-- Compare Hero Section -->
+<section class="relative pt-24 pb-16 overflow-hidden">
+    <!-- Background -->
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50"></div>
+    
+    <!-- Floating shapes -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="floating-shape absolute top-20 right-20 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-3xl transform rotate-45"></div>
+        <div class="floating-shape-delayed absolute bottom-20 left-20 w-24 h-24 bg-gradient-to-br from-green-200/20 to-emerald-200/20 rounded-full"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Back Button -->
-        <div class="mb-6">
+        <div class="mb-8">
             <a href="{% url 'browse_diet_plans' %}" 
-               class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors">
-                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+               class="inline-flex items-center text-slate-600 hover:text-slate-800 transition-colors group">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform"></i>
                 Powrót do listy planów
             </a>
         </div>
 
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-4">Porównanie planów dietetycznych</h1>
-            <p class="text-xl text-gray-600">
+        <div class="text-center mb-12">
+            <h1 class="text-5xl md:text-7xl font-black text-slate-800 mb-6 leading-none">
+                Porównaj <span class="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">plany</span>
+            </h1>
+            <p class="text-xl text-slate-600 max-w-2xl mx-auto">
                 Sprawdź szczegóły i wybierz najlepszy plan dla siebie
             </p>
         </div>
+        
+        <!-- Quick comparison stats -->
+        <div class="grid grid-cols-1 md:grid-cols-{{ comparison_data|length }} gap-6 mb-12">
+            {% for data in comparison_data %}
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 text-center">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">{{ data.plan.name }}</h3>
+                <div class="text-3xl font-black text-green-600 mb-2">{{ data.plan.weekly_price|floatformat:0 }} zł</div>
+                <div class="text-sm text-slate-500">za tydzień</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
 
-        <!-- Comparison Table -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+<!-- Comparison Table -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-slate-50 rounded-3xl p-8 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 min-w-[200px]">Parametr</th>
-                            {% for data in comparison_data %}
-                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 min-w-[250px]">
-                                    <div class="text-lg font-bold text-gray-800">{{ data.plan.name }}</div>
-                                </th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
+                <table class="w-full min-w-[800px]">
+
+                    <tbody class="divide-y divide-slate-200">
                         
-                        <!-- Plan Description -->
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Opis</td>
+                        <!-- Description -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-semibold text-slate-800 sticky left-0 bg-slate-50">
+                                <i data-lucide="file-text" class="w-4 h-4 inline mr-2 text-blue-500"></i>
+                                Opis planu
+                            </td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center text-sm text-gray-600">
-                                    {{ data.plan.description|truncatewords:15 }}
+                                <td class="py-4 px-4 text-center">
+                                    <div class="text-sm text-slate-600 line-clamp-3">
+                                        {{ data.plan.description }}
+                                    </div>
                                 </td>
                             {% endfor %}
                         </tr>
 
                         <!-- Pricing Section -->
-                        <tr class="bg-green-50">
-                            <td colspan="{{ plan_count|add:1 }}" class="px-6 py-3 text-sm font-semibold text-green-800 uppercase tracking-wide">
-                                Cennik
+                        <tr class="bg-green-50/50">
+                            <td colspan="{{ comparison_data|length|add:1 }}" class="py-3 px-4">
+                                <h4 class="text-lg font-bold text-green-800 flex items-center">
+                                    <i data-lucide="dollar-sign" class="w-5 h-5 mr-2"></i>
+                                    Cennik
+                                </h4>
                             </td>
                         </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Cena tygodniowa</td>
+                        <!-- Weekly Price -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-medium text-slate-700 sticky left-0 bg-slate-50">
+                                Cena tygodniowa
+                            </td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-2xl font-bold text-green-600">{{ data.plan.weekly_price }}zł</span>
+                                <td class="py-4 px-4 text-center">
+                                    <div class="text-2xl font-bold text-green-600">{{ data.plan.weekly_price|floatformat:0 }} zł</div>
                                 </td>
                             {% endfor %}
                         </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Cena miesięczna</td>
+                        <!-- Monthly Price -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-medium text-slate-700 sticky left-0 bg-slate-50">
+                                Cena miesięczna
+                            </td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-xl font-bold text-blue-600">{{ data.plan.monthly_price }}zł</span>
+                                <td class="py-4 px-4 text-center">
+                                    <div class="text-xl font-semibold text-slate-800">{{ data.plan.monthly_price|floatformat:0 }} zł</div>
                                 </td>
                             {% endfor %}
                         </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Cena roczna</td>
+                        <!-- Cost per meal -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-medium text-slate-700 sticky left-0 bg-slate-50">
+                                Koszt na posiłek
+                            </td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-lg font-bold text-purple-600">{{ data.plan.yearly_price }}zł</span>
+                                <td class="py-4 px-4 text-center">
+                                    <div class="text-lg font-medium text-orange-600">{{ data.plan.weekly_price|div:21|floatformat:2 }} zł</div>
                                 </td>
                             {% endfor %}
                         </tr>
 
-                        <!-- Completion Section -->
-                        <tr class="bg-blue-50">
-                            <td colspan="{{ plan_count|add:1 }}" class="px-6 py-3 text-sm font-semibold text-blue-800 uppercase tracking-wide">
-                                Kompletność planu
+                        <!-- Nutrition Section -->
+                        <tr class="bg-blue-50/50">
+                            <td colspan="{{ comparison_data|length|add:1 }}" class="py-3 px-4">
+                                <h4 class="text-lg font-bold text-blue-800 flex items-center">
+                                    <i data-lucide="activity" class="w-5 h-5 mr-2"></i>
+                                    Wartości odżywcze (dziennie)
+                                </h4>
                             </td>
                         </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Posiłki w planie</td>
+                        <!-- Calories -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-medium text-slate-700 sticky left-0 bg-slate-50">
+                                Kalorie dziennie
+                            </td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex flex-col items-center">
-                                        <span class="text-2xl font-bold text-gray-800">{{ data.meal_count }}/21</span>
-                                        <div class="w-20 bg-gray-200 rounded-full h-2 mt-2">
-                                            <div class="bg-blue-500 h-2 rounded-full" style="width: {{ data.completion_percentage }}%"></div>
-                                        </div>
-                                        <span class="text-xs text-gray-500 mt-1">{{ data.completion_percentage }}%</span>
-                                    </div>
+                                <td class="py-4 px-4 text-center">
+                                    <div class="text-xl font-bold text-slate-800">{{ data.avg_daily_calories|floatformat:0 }}</div>
+                                    <div class="text-sm text-slate-500">kcal</div>
                                 </td>
                             {% endfor %}
                         </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Śniadania</td>
+                        <!-- Protein -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-medium text-slate-700 sticky left-0 bg-slate-50">
+                                Białko dziennie
+                            </td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-lg font-medium">{{ data.meal_type_counts.breakfast }}/7</span>
+                                <td class="py-4 px-4 text-center">
+                                    <div class="text-xl font-bold text-green-600">{{ data.avg_daily_protein|floatformat:1 }}g</div>
                                 </td>
                             {% endfor %}
                         </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Obiady</td>
+                        <!-- Fat -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-medium text-slate-700 sticky left-0 bg-slate-50">
+                                Tłuszcze dziennie
+                            </td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-lg font-medium">{{ data.meal_type_counts.lunch }}/7</span>
-                                </td>
-                            {% endfor %}
-                        </tr>
-                        
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Kolacje</td>
-                            {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-lg font-medium">{{ data.meal_type_counts.dinner }}/7</span>
+                                <td class="py-4 px-4 text-center">
+                                    <div class="text-xl font-bold text-blue-600">{{ data.avg_daily_fat|floatformat:1 }}g</div>
                                 </td>
                             {% endfor %}
                         </tr>
 
-                        <!-- Nutritional Section -->
-                        <tr class="bg-yellow-50">
-                            <td colspan="{{ plan_count|add:1 }}" class="px-6 py-3 text-sm font-semibold text-yellow-800 uppercase tracking-wide">
-                                Wartości odżywcze (średnie dzienne)
+                        <!-- Plan Details Section -->
+                        <tr class="bg-purple-50/50">
+                            <td colspan="{{ comparison_data|length|add:1 }}" class="py-3 px-4">
+                                <h4 class="text-lg font-bold text-purple-800 flex items-center">
+                                    <i data-lucide="clipboard-list" class="w-5 h-5 mr-2"></i>
+                                    Szczegóły planu
+                                </h4>
                             </td>
                         </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Kalorie</td>
-                            {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-2xl font-bold text-orange-600">{{ data.avg_daily_calories }}</span>
-                                    <div class="text-sm text-gray-500">kcal/dzień</div>
-                                </td>
-                            {% endfor %}
-                        </tr>
                         
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Białko</td>
-                            {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-xl font-bold text-green-600">{{ data.avg_daily_protein }}g</span>
-                                    <div class="text-sm text-gray-500">dziennie</div>
-                                </td>
-                            {% endfor %}
-                        </tr>
-                        
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Tłuszcze</td>
-                            {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-xl font-bold text-yellow-600">{{ data.avg_daily_fat }}g</span>
-                                    <div class="text-sm text-gray-500">dziennie</div>
-                                </td>
-                            {% endfor %}
-                        </tr>
-
-                        <!-- Allergens Section -->
-                        <tr class="bg-red-50">
-                            <td colspan="{{ plan_count|add:1 }}" class="px-6 py-3 text-sm font-semibold text-red-800 uppercase tracking-wide">
+                        <!-- Allergens -->
+                        <tr class="hover:bg-white/50 transition-colors">
+                            <td class="py-4 px-4 font-medium text-slate-700 sticky left-0 bg-slate-50">
                                 Alergeny
                             </td>
-                        </tr>
-                        
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Zawiera alergeny</td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4">
+                                <td class="py-4 px-4 text-center">
                                     {% if data.allergens %}
                                         <div class="flex flex-wrap gap-1 justify-center">
                                             {% for allergen in data.allergens %}
-                                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">{{ allergen }}</span>
+                                            <span class="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                                                {{ allergen }}
+                                            </span>
                                             {% endfor %}
                                         </div>
                                     {% else %}
-                                        <div class="text-center text-green-600 font-medium">
-                                            <i data-lucide="check" class="w-4 h-4 inline mr-1"></i>
+                                        <div class="text-green-600 font-medium flex items-center justify-center">
+                                            <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i>
                                             Brak alergenów
                                         </div>
                                     {% endif %}
                                 </td>
                             {% endfor %}
                         </tr>
+                        
 
-                        <!-- Cost Analysis -->
-                        <tr class="bg-purple-50">
-                            <td colspan="{{ plan_count|add:1 }}" class="px-6 py-3 text-sm font-semibold text-purple-800 uppercase tracking-wide">
-                                Analiza kosztów
+
+                        <!-- Action Buttons -->
+                        <tr class="bg-slate-100">
+                            <td class="py-6 px-4 font-semibold text-slate-800 sticky left-0 bg-slate-100">
+                                
                             </td>
-                        </tr>
-                        
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Koszt składników (tydzień)</td>
                             {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-lg font-bold text-purple-600">{{ data.weekly_cost }}zł</span>
-                                </td>
-                            {% endfor %}
-                        </tr>
-                        
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-800">Koszt za posiłek</td>
-                            {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    {% if data.meal_count > 0 %}
-                                        <span class="text-lg font-bold text-purple-600">{{ data.weekly_cost|div:data.meal_count|floatformat:2 }}zł</span>
-                                    {% else %}
-                                        <span class="text-gray-500">-</span>
-                                    {% endif %}
-                                </td>
-                            {% endfor %}
-                        </tr>
-
-                        <!-- Actions -->
-                        <tr class="bg-gray-100">
-                            <td class="px-6 py-4 font-medium text-gray-800">Akcje</td>
-                            {% for data in comparison_data %}
-                                <td class="px-6 py-4 text-center">
-                                    <div class="space-y-2">
+                                <td class="py-6 px-4 text-center">
+                                    <div class="space-y-3">
                                         <a href="{% url 'diet_plan_detail' data.plan.pk %}" 
-                                           class="block bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors">
+                                           class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 block">
+                                            <i data-lucide="eye" class="w-4 h-4 inline mr-2"></i>
                                             Zobacz szczegóły
                                         </a>
-                                        <button class="block w-full bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 transition-colors opacity-50 cursor-not-allowed">
-                                            Zamów plan (wkrótce)
+                                        
+                                        <button class="w-full bg-green-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-green-600 transition-colors cursor-not-allowed opacity-75">
+                                            <i data-lucide="shopping-cart" class="w-4 h-4 inline mr-2"></i>
+                                            Zamów (wkrótce)
                                         </button>
                                     </div>
                                 </td>
@@ -248,112 +231,89 @@
             </div>
         </div>
 
-        <!-- Summary and Recommendations -->
-        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <!-- Best Value -->
-            {% if comparison_data %}
-                {% with cheapest=comparison_data|first %}
-                    {% for data in comparison_data %}
-                        {% if data.plan.weekly_price < cheapest.plan.weekly_price %}
-                            {% with cheapest=data %}{% endwith %}
-                        {% endif %}
-                    {% endfor %}
-                    
-                    <div class="bg-green-50 border border-green-200 rounded-2xl p-6">
-                        <h3 class="text-xl font-bold text-green-800 mb-4 flex items-center">
-                            <i data-lucide="award" class="w-6 h-6 mr-2"></i>
-                            Najlepszy stosunek ceny do jakości
-                        </h3>
-                        <div class="bg-white rounded-lg p-4">
-                            <h4 class="font-bold text-gray-800 text-lg">{{ cheapest.plan.name }}</h4>
-                            <p class="text-gray-600 mb-3">{{ cheapest.plan.description|truncatewords:20 }}</p>
-                            <div class="flex justify-between items-center">
-                                <span class="text-2xl font-bold text-green-600">{{ cheapest.plan.weekly_price }}zł/tyg</span>
-                                <a href="{% url 'diet_plan_detail' cheapest.plan.pk %}" 
-                                   class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
-                                    Zobacz szczegóły
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endwith %}
-            {% endif %}
 
-            <!-- Recommendations -->
-            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-                <h3 class="text-xl font-bold text-blue-800 mb-4 flex items-center">
-                    <i data-lucide="lightbulb" class="w-6 h-6 mr-2"></i>
-                    Rekomendacje
-                </h3>
-                <div class="space-y-3 text-sm">
-                    <div class="flex items-start">
-                        <i data-lucide="check" class="w-4 h-4 text-blue-600 mr-2 mt-0.5"></i>
-                        <span>Wybierz plan z kompletności powyżej 80% dla najlepszych rezultatów</span>
-                    </div>
-                    <div class="flex items-start">
-                        <i data-lucide="check" class="w-4 h-4 text-blue-600 mr-2 mt-0.5"></i>
-                        <span>Sprawdź alergeny przed złożeniem zamówienia</span>
-                    </div>
-                    <div class="flex items-start">
-                        <i data-lucide="check" class="w-4 h-4 text-blue-600 mr-2 mt-0.5"></i>
-                        <span>Plany miesięczne i roczne oferują lepsze ceny</span>
-                    </div>
-                    <div class="flex items-start">
-                        <i data-lucide="check" class="w-4 h-4 text-blue-600 mr-2 mt-0.5"></i>
-                        <span>Możesz zmienić plan w trakcie subskrypcji (maks. 2 razy/miesiąc)</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<style>
+/* Animations matching other pages */
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+}
 
-        <!-- Call to Action -->
-        <div class="mt-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl p-8 text-white text-center">
-            <h2 class="text-3xl font-bold mb-4">Wybrałeś swój idealny plan?</h2>
-            <p class="text-lg mb-6 opacity-90">
-                Rozpocznij swoją przygodę ze zdrowym odżywianiem już dziś
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'browse_diet_plans' %}" 
-                   class="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-colors">
-                    Zobacz więcej planów
-                </a>
-                <button class="bg-white text-gray-800 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors opacity-50 cursor-not-allowed">
-                    Zamów wybrany plan (wkrótce)
-                </button>
-            </div>
-        </div>
-    </div>
-</section>
+@keyframes floatDelayed {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(-3deg); }
+}
+
+.floating-shape {
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-shape-delayed {
+    animation: floatDelayed 8s ease-in-out infinite;
+    animation-delay: -2s;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Table responsiveness */
+.sticky {
+    position: sticky;
+    z-index: 10;
+}
+
+/* Smooth table hover effects */
+tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+/* Progress bars animation */
+@keyframes progressFill {
+    from { width: 0%; }
+}
+
+.bg-gradient-to-r.from-green-400.to-emerald-500 {
+    animation: progressFill 1s ease-out;
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Lucide icons
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
     
-    // Add smooth animations
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach((row, index) => {
-        row.style.animationDelay = `${index * 0.05}s`;
-        row.classList.add('animate-fade-in');
+    // Animate progress bars on scroll
+    const progressBars = document.querySelectorAll('.bg-gradient-to-r.from-green-400.to-emerald-500');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'progressFill 1s ease-out';
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    progressBars.forEach(bar => observer.observe(bar));
+    
+    // Add smooth scrolling for hash links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
     });
 });
 </script>
 
-<style>
-@keyframes fade-in {
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
-}
-
-.animate-fade-in {
-    animation: fade-in 0.3s ease-out forwards;
-}
-</style>
 {% endblock content %}
