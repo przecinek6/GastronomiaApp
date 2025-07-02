@@ -211,14 +211,15 @@
                                 <!-- Action Buttons -->
                                 <div class="space-y-3">
                                     <a href="{% url 'diet_plan_detail' plan.pk %}" 
-                                       class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 block text-center">
+                                    class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 block text-center">
                                         Zobacz szczegóły
                                         <i data-lucide="arrow-right" class="w-4 h-4 inline ml-2"></i>
                                     </a>
                                     
-                                    <button class="w-full bg-slate-100 text-slate-600 py-3 px-6 rounded-xl font-semibold hover:bg-slate-200 transition-colors cursor-not-allowed opacity-50">
-                                        Zamów plan (wkrótce)
-                                    </button>
+                                    <a href="{% url 'subscription_create' plan.pk %}" class="w-full bg-orange-500 text-white py-3 px-6 rounded-xl font-semibold hover:bg-orange-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 block text-center">
+                                        <i data-lucide="shopping-cart" class="w-4 h-4 inline mr-2"></i>
+                                        Zamów plan
+                                    </a>
                                 </div>
                             </div>
                         </div>
