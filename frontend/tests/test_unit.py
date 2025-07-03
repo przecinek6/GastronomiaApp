@@ -41,7 +41,7 @@ class IngredientModelTest(TestCase):
             ingredient = Ingredient(**{**self.valid_ingredient_data, 'name': ''})
             ingredient.full_clean()
         
-        # Nazwa zbyt długa (zakładając max 100 znaków)
+        # Nazwa zbyt długa
         with self.assertRaises(ValidationError):
             ingredient = Ingredient(**{**self.valid_ingredient_data, 'name': 'A' * 201})
             ingredient.full_clean()
@@ -68,7 +68,6 @@ class IngredientModelTest(TestCase):
         ingredient.save()
         
         self.assertTrue(ingredient.is_deleted)
-        # Weryfikacja czy składnik nie pojawia się w aktywnych zapytaniach
         active_ingredients = Ingredient.objects.filter(is_deleted=False)
         self.assertNotIn(ingredient, active_ingredients)
 
@@ -136,13 +135,13 @@ class DishModelTest(TestCase):
             quantity_grams=Decimal('10.0')
         )
         
-        # Obliczenia ręczne do weryfikacji
+        # Oczekiwane wartości
         expected_calories = (165.0 * 2.0) + (130.0 * 1.5) + (884.0 * 0.1)  # 713.4
         expected_protein = (31.0 * 2.0) + (2.7 * 1.5) + (0.0 * 0.1)  # 66.05
         expected_fat = (3.6 * 2.0) + (0.3 * 1.5) + (100.0 * 0.1)  # 17.65
         expected_cost = (2.50 * 2.0) + (0.80 * 1.5) + (1.20 * 0.1)  # 6.32
         
-        # Weryfikacja obliczeń (z tolerancją na błędy zaokrąglenia)
+        # Weryfikacja obliczeń
         self.assertAlmostEqual(float(dish.total_calories), expected_calories, places=1)
         self.assertAlmostEqual(float(dish.total_protein), expected_protein, places=1)
         self.assertAlmostEqual(float(dish.total_fat), expected_fat, places=1)
@@ -206,7 +205,6 @@ class DietPlanBusinessLogicTest(TestCase):
     
     def test_diet_plan_price_calculation(self):
         """Test obliczania ceny planu dietetycznego"""
-        # Test różnych okresów subskrypcji
         weekly_price = self.diet_plan.weekly_price
         
         # Miesięczna subskrypcja (4 tygodnie)
@@ -242,7 +240,6 @@ class LoyaltySystemTest(TestCase):
     """Test systemu punktów lojalnościowych"""
     
     def setUp(self):
-        # Unikalna nazwa użytkownika dla każdego testu
         import uuid
         unique_id = str(uuid.uuid4())[:8]
         
@@ -252,7 +249,6 @@ class LoyaltySystemTest(TestCase):
             password='testpass123'
         )
         
-        # Utworzenie lub pobranie konta lojalnościowego (get_or_create)
         self.loyalty_account, created = LoyaltyAccount.objects.get_or_create(
             user=self.client_user,
             defaults={
@@ -287,7 +283,6 @@ class LoyaltySystemTest(TestCase):
             total_amount=Decimal('200.00')
         )
         
-        # Symulacja płatności - 1 punkt za każdy złoty
         payment = Payment.objects.create(
             subscription=subscription,
             amount=Decimal('200.00'),
@@ -297,7 +292,7 @@ class LoyaltySystemTest(TestCase):
         )
         
         # Dodanie punktów
-        point_transaction = PointTransaction.objects.create(
+        PointTransaction.objects.create(
             account=self.loyalty_account,
             points=200,  # 1 punkt za 1 zł
             transaction_type='purchase',
